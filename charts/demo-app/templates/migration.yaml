@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-migrate
+  labels:
+    {{- include "demo.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 120
+  template:
+    metadata:
+      labels:
+        {{- include "demo.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "demo.security" . | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "demo.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: [alembic, upgrade, head]
+          env:
+            {{- include "demo.environment" . | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - {name: db-password, mountPath: /run/secrets, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: db-password
+          secret: {secretName: {{ .Values.database.existingSecret }}, defaultMode: 0440}
+        - name: tmp
+          emptyDir: {sizeLimit: 64Mi}

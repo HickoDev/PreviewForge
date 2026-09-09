@@ -1,0 +1,62 @@
+{
+  "started_at": "2026-09-09T22:52:11.852533+00:00",
+  "scope": "local kind + local Git fixture",
+  "checks": [
+    {
+      "name": "Offline guard regressions, Helm lint, Kubernetes validation, mutable-image rejection",
+      "finished_at": "2026-09-09T22:52:16.119713+00:00",
+      "seconds": 4.266
+    },
+    {
+      "name": "PostgreSQL CRUD, readiness, docs, metrics and exact source/image identity",
+      "finished_at": "2026-09-09T22:52:19.911027+00:00",
+      "seconds": 3.797,
+      "task_id": "94e1d939-72cb-49cc-81a8-562d5df809da",
+      "initial": {
+        "image": {
+          "repository": "docker.io/previewforge/demo",
+          "digest": "sha256:a9d74f71e1ab5a24a651d823cf69844b77cdde3d4577be5b07de603efab28229",
+          "pullPolicy": "Never"
+        },
+        "sourceSha": "6fe7f32853808039849697dfc9bff0e2bfa8c685"
+      }
+    },
+    {
+      "name": "Git configuration commit automatically rolled out a different image",
+      "finished_at": "2026-09-09T22:53:14.512175+00:00",
+      "seconds": 45.969,
+      "committed_at": "2026-09-09T22:52:28.538719+00:00",
+      "config_sha": "07520e17d97930ad8b3e5fba09579d7d3bae0432",
+      "source_sha": "c2a813b8ac4e04a0978cb2c6edcdee4d5c80bd51",
+      "build_and_load_seconds": 8.625,
+      "digest": "sha256:f4c23096e61d4f15b8a46ea3037750b6ae15c49b18128b63ef6a3582c8b4f1e0",
+      "version": {
+        "source_sha": "c2a813b8ac4e04a0978cb2c6edcdee4d5c80bd51",
+        "environment": "staging"
+      }
+    },
+    {
+      "name": "Argo CD self-heal restored the Git replica count",
+      "finished_at": "2026-09-09T22:53:16.869621+00:00",
+      "seconds": 2.359
+    },
+    {
+      "name": "Unavailable image observed; known-good API retained; Git recovery completed",
+      "finished_at": "2026-09-09T22:56:12.484272+00:00",
+      "seconds": 175.609,
+      "bad_config_sha": "953cbd110981c587e79c3e9b97fafb266640025c",
+      "recovery_config_sha": "36207d2bae56c98680477632614ed7368c4fbb67",
+      "observed": {
+        "pod": "demo-migrate-4wwcj",
+        "reason": "ErrImageNeverPull"
+      }
+    },
+    {
+      "name": "Database outage/readiness failure, liveness, recovery and persistent volume reuse",
+      "finished_at": "2026-09-09T22:56:30.845563+00:00",
+      "seconds": 18.36
+    }
+  ],
+  "status": "passed",
+  "completed_at": "2026-09-09T22:56:31.028491+00:00"
+}

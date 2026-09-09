@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api
+  labels:
+    {{- include "demo.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  revisionHistoryLimit: 3
+  progressDeadlineSeconds: 90
+  strategy:
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  selector:
+    matchLabels: {app: {{ .Release.Name }}-api}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+        {{- include "demo.labels" . | nindent 8 }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8000"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "demo.security" . | nindent 8 }}
+      containers:
+        - name: api
+          image: {{ include "demo.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports: [{name: http, containerPort: 8000}]
+          env:
+            {{- include "demo.environment" . | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          startupProbe:
+            httpGet: {path: /health/live, port: http}
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: {path: /health/live, port: http}
+            periodSeconds: 5
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet: {path: /health/ready, port: http}
+            periodSeconds: 3
+            timeoutSeconds: 5
+            failureThreshold: 2
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - {name: db-password, mountPath: /run/secrets, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: db-password
+          secret: {secretName: {{ .Values.database.existingSecret }}, defaultMode: 0440}
+        - name: tmp
+          emptyDir: {sizeLimit: 64Mi}

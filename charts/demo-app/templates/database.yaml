@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-postgres
+  labels:
+    {{- include "demo.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  serviceName: {{ .Release.Name }}-postgres
+  replicas: 1
+  selector:
+    matchLabels: {app: {{ .Release.Name }}-postgres}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-postgres
+        {{- include "demo.labels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: postgres
+          image: {{ .Values.database.image | quote }}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_DB, value: {{ .Values.database.name | quote }}}
+            - {name: POSTGRES_USER, value: {{ .Values.database.user | quote }}}
+            - {name: POSTGRES_PASSWORD_FILE, value: /run/secrets/db_password}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+          startupProbe:
+            exec:
+              command: [pg_isready, -h, "127.0.0.1", -U, {{ .Values.database.user }}, -d, {{ .Values.database.name }}]
+            periodSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command: [pg_isready, -h, "127.0.0.1", -U, {{ .Values.database.user }}, -d, {{ .Values.database.name }}]
+            periodSeconds: 3
+          resources:
+            {{- toYaml .Values.databaseResources | nindent 12 }}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+            - {name: db-password, mountPath: /run/secrets, readOnly: true}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: {{ .Release.Name }}-postgres}
+        - name: db-password
+          secret:
+            secretName: {{ .Values.database.existingSecret }}
+            defaultMode: 0440

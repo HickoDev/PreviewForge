@@ -1,0 +1,78 @@
+{
+  "gitops": {
+    "started_at": "2026-09-09T22:34:23.042973+00:00",
+    "scope": "local kind + local Git fixture",
+    "checks": [
+      {
+        "name": "3 offline guard regressions, Helm lint, Kubernetes validation, mutable-image rejection",
+        "finished_at": "2026-09-09T22:34:25.783053+00:00",
+        "seconds": 2.734
+      },
+      {
+        "name": "PostgreSQL CRUD, readiness, docs, metrics and exact source/image identity",
+        "finished_at": "2026-09-09T22:34:28.549207+00:00",
+        "seconds": 2.766,
+        "task_id": "60016e1d-4c93-4e5a-afc0-bb1d9bb6829b",
+        "initial": {
+          "image": {
+            "repository": "docker.io/previewforge/demo",
+            "digest": "sha256:7ec4e44b98fc462a020ef8273fbf30ae31c2f28672d2ca81f4c6099a87246dc4",
+            "pullPolicy": "Never"
+          },
+          "sourceSha": "454201b4aaedea4dbfc9089849a93845fced23ee"
+        }
+      },
+      {
+        "name": "Git configuration commit automatically rolled out a different image",
+        "finished_at": "2026-09-09T22:35:08.581657+00:00",
+        "seconds": 31.797,
+        "committed_at": "2026-09-09T22:34:36.786031+00:00",
+        "config_sha": "c1332252f5d0b539dc7f390e96bdb3fe7e2c2eb2",
+        "source_sha": "d4297b10b0c9825f234a20a01743bf98ea995596",
+        "build_and_load_seconds": 8.234,
+        "digest": "sha256:68ac3b6b5336f30caea12ea0a872655214a94df5668a40d8a5a3d98d28b883f0",
+        "version": {
+          "source_sha": "d4297b10b0c9825f234a20a01743bf98ea995596",
+          "environment": "staging"
+        }
+      },
+      {
+        "name": "Argo CD self-heal restored the Git replica count",
+        "finished_at": "2026-09-09T22:35:10.913684+00:00",
+        "seconds": 2.328
+      },
+      {
+        "name": "Unavailable image observed; known-good API retained; Git recovery completed",
+        "finished_at": "2026-09-09T22:38:04.720522+00:00",
+        "seconds": 173.797,
+        "bad_config_sha": "f2f5ec9bbbe5359d442134951254684ceb589a23",
+        "recovery_config_sha": "6fe7f32853808039849697dfc9bff0e2bfa8c685",
+        "observed": {
+          "pod": "demo-migrate-nzvnm",
+          "reason": "ErrImageNeverPull"
+        }
+      },
+      {
+        "name": "Database outage/readiness failure, liveness, recovery and persistent volume reuse",
+        "finished_at": "2026-09-09T22:38:23.705877+00:00",
+        "seconds": 19.0
+      }
+    ],
+    "status": "passed",
+    "completed_at": "2026-09-09T22:38:23.873491+00:00"
+  },
+  "stop_start": {
+    "status": "passed",
+    "completed_at": "2026-09-09T22:41:16.376921+00:00",
+    "seconds": 61.734,
+    "task_id": "60016e1d-4c93-4e5a-afc0-bb1d9bb6829b",
+    "version": {
+      "source_sha": "d4297b10b0c9825f234a20a01743bf98ea995596",
+      "environment": "staging"
+    },
+    "pvc_uid": "cfda1bb8-cce6-456e-acfc-444de8357872",
+    "same_kind_node": true,
+    "normal_kubeconfig_unchanged": true,
+    "milestone1_containers_unchanged": true
+  }
+}
