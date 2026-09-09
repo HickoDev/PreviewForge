@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-postgres
+  labels:
+    {{- include "demo.labels" . | nindent 4 }}
+  annotations:
+    # WaitForFirstConsumer requires the PVC and database in the same wave.
+    argocd.argoproj.io/sync-wave: "-2"
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+    helm.sh/resource-policy: keep
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ .Values.database.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.database.storageSize }}

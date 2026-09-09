@@ -2,7 +2,7 @@
 
 **A test environment for every pull request.**
 
-PreviewForge is a local self-service GitOps platform being built one milestone at a time. This checkout is the platform repository, `HickoDev/PreviewForge`. Milestone 1 supplies the real application that later milestones will deploy: a FastAPI task API, PostgreSQL and Floci for simulated S3/SQS.
+PreviewForge is a local self-service GitOps platform being built one milestone at a time. This checkout is the platform repository, `HickoDev/PreviewForge`. Milestone 1 supplies a FastAPI task API, PostgreSQL and Floci for simulated S3/SQS. Milestone 2 adds kind, Helm and Argo CD for persistent local staging.
 
 The demo application lives in `previewforge-demo/` with its own dependencies, tests, migrations and Dockerfile. Keeping it here initially makes a single checkout runnable. It remains a separate logical component; a second remote repository requires discussion before GitHub automation is introduced.
 
@@ -36,13 +36,37 @@ The wrapper generates a database password under `%LOCALAPPDATA%\PreviewForge\run
 
 See [setup and API examples](docs/setup.md), [architecture and decisions](docs/architecture.md) and [Milestone 1 review and verification results](docs/results/milestone-1-review.md).
 
+## Local Kubernetes staging
+
+With Python 3.12, Docker Desktop and Git available, run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 up
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 forward
+```
+
+Open [staging API documentation](http://127.0.0.1:18000/docs). The first command installs pinned tools locally and waits for Argo CD to synchronize staging. The second keeps a loopback port-forward open; Ctrl+C closes it. GitHub downloads use `gh` only after verifying the active account is HickoDev. The separate kubeconfig and database password stay outside Git/OneDrive.
+
+```powershell
+# Real local Git commits, immutable image rollout, drift repair and failure recovery.
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 verify
+
+# Inspect, or stop while retaining the cluster and its data.
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 status
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 stop
+```
+
+See [Kubernetes setup, ownership and demo instructions](docs/kubernetes.md) and [Milestone 2 review and results](docs/results/milestone-2-review.md). This uses a read-only local Git fixture and locally loaded application images. GitHub PR delivery and image publication remain later work. The Milestone 1 Compose stack can run alongside staging and continues to own Floci.
+
 ## Implementation and verification checklist
 
 - [x] Milestone 1 implementation: API, migrations, container build, Compose, structured request logs and synthetic seed command.
 - [x] Milestone 1 verification: clean startup, PostgreSQL CRUD, 27 passing unit/integration tests and migration lifecycle.
 - [x] Milestone 1 verification: health/version/metrics, API replacement persistence and database recovery.
 - [x] Milestone 1 verification: pinned Floci S3/SQS smoke tests from host and application container, with cleanup confirmed.
-- [ ] Milestone 2: kind, Helm, Argo CD and persistent staging.
+- [x] Milestone 2 implementation: kind, Helm, Argo CD and persistent staging with a private local Git fixture.
+- [x] Milestone 2 verification: exact image/source rollout from a config commit, drift repair, failure visibility and completed Git recovery.
+- [x] Milestone 2 verification: eight offline guard/fixture tests, database/PVC persistence and documented cluster stop/start.
 - [ ] Milestone 3: GitHub Actions, immutable GHCR images, ApplicationSet, PR previews and cleanup.
 - [ ] Milestone 4: Prometheus/Grafana dashboards, alerts and measured recovery.
 - [ ] Milestone 5: Terraform-managed Floci resources, local reconciler and asynchronous exports.
@@ -50,4 +74,4 @@ See [setup and API examples](docs/setup.md), [architecture and decisions](docs/a
 
 `ai-assistant/.env.example` contains design placeholders only. No AI service/provider has been implemented or called, and no NVIDIA key is needed. Live hosted inference will require separate opt-in and privately configured credentials at Milestone 6.
 
-No Kubernetes cluster, GitHub workflow, published image, real cloud resource or public service is part of Milestone 1. Floci checks prove the listed emulated API operations, not real AWS deployment or tenant security. Milestone 2 starts only after review.
+No GitHub workflow, published image, real cloud resource or public service has been created. Floci checks prove the listed emulated API operations, not real AWS deployment or tenant security. Kubernetes namespace/storage separation is not a claim of enforced network isolation.

@@ -1,0 +1,22 @@
+{
+  "kind": {
+    "version": "v0.33.0",
+    "sha256": "4b22adaa135368c5a465d56bbd8e520cbea87272a06ca00b6078e7b81515c9fc"
+  },
+  "helm": {
+    "version": "v4.2.4",
+    "url": "https://get.helm.sh/helm-v4.2.4-windows-amd64.zip",
+    "sha256": "e94d83a4706fd82078c98dade2079fa9d9680c1c2bfb93bfc304ee6bc2412a32"
+  },
+  "kubectl": {
+    "version": "v1.35.8",
+    "url": "https://dl.k8s.io/release/v1.35.8/bin/windows/amd64/kubectl.exe",
+    "sha256": "f675d70224b42b84e0442e8d7644efbe440e4451a4b02bdc5d95823a96316ba8"
+  },
+  "gitServerImage": "quay.io/argoproj/argocd:v3.5.2@sha256:e2aadfae709d904e87f46ba4aa49601d827b3022db22cd4d03aae816a2e7097b",
+  "argocd": {
+    "version": "v3.5.2",
+    "commit": "e258ee23c3e52266d407572f4bcdfe7d9ed36cb5",
+    "sha256": "9a87f2b3e14c278f12501eb0ef5c3955b27cf05370ca425381c6a908cf85a5c5"
+  }
+}

@@ -1,0 +1,7 @@
+# Non-secret staging defaults. Bootstrap commits the actual image digest in its
+# private local Git fixture, after building and loading the source snapshot.
+environment: staging
+replicas: 1
+database:
+  existingSecret: staging-db
+  storageClass: previewforge-retain

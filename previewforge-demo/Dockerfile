@@ -20,6 +20,9 @@ USER 10001:10001
 CMD ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider"]
 
 FROM base AS runtime
+ARG SOURCE_SHA=local-uncommitted
+ENV SOURCE_SHA=${SOURCE_SHA}
+LABEL org.opencontainers.image.revision=${SOURCE_SHA}
 USER 10001:10001
 EXPOSE 8000
 CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
