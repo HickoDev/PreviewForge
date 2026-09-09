@@ -1,0 +1,112 @@
+name: previewforge-m1
+
+x-app-environment: &app-environment
+  DATABASE_HOST: db
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: previewforge
+  DATABASE_USER: previewforge
+  DATABASE_PASSWORD_FILE: /run/secrets/db_password
+  ENVIRONMENT_NAME: local
+  SOURCE_SHA: ${PREVIEWFORGE_SOURCE_SHA:-local-uncommitted}
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+  AWS_SESSION_TOKEN: test
+  AWS_DEFAULT_REGION: us-east-1
+  AWS_EC2_METADATA_DISABLED: "true"
+  AWS_CONFIG_FILE: /dev/null
+  AWS_SHARED_CREDENTIALS_FILE: /dev/null
+  AWS_ENDPOINT_URL: http://floci:4566
+
+x-app: &app
+  image: ${PREVIEWFORGE_COMPOSE_PROJECT:-previewforge-m1}-api:local
+  build:
+    context: ./previewforge-demo
+    target: runtime
+  environment: *app-environment
+  secrets: [db_password]
+  init: true
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+
+services:
+  db:
+    image: postgres:17.9-alpine@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
+    environment:
+      POSTGRES_DB: previewforge
+      POSTGRES_USER: previewforge
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U previewforge -d previewforge"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    <<: *app
+    command: [alembic, upgrade, head]
+    depends_on:
+      db: {condition: service_healthy}
+
+  api:
+    <<: *app
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5)"]
+      interval: 5s
+      timeout: 6s
+      retries: 12
+      start_period: 5s
+
+  floci:
+    image: floci/floci:2.0.1@sha256:4e451c39c7bb88e3cd4f87e8fc0c25d5b47695a51185d521e2241fa00486e8eb
+    ports: ["127.0.0.1:4566:4566"]
+    environment:
+      FLOCI_HOSTNAME: floci
+      FLOCI_BASE_URL: http://floci:4566
+      FLOCI_STORAGE_MODE: persistent
+      FLOCI_STORAGE_PERSISTENT_PATH: /app/data
+    volumes: [floci-data:/app/data]
+    # Uses the image's own health check. S3/SQS need no Docker socket.
+
+  test-db:
+    profiles: [test]
+    image: postgres:17.9-alpine@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
+    environment:
+      POSTGRES_DB: previewforge_test
+      POSTGRES_USER: previewforge
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    tmpfs: [/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U previewforge -d previewforge_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  tests:
+    <<: *app
+    profiles: [test]
+    image: ${PREVIEWFORGE_COMPOSE_PROJECT:-previewforge-m1}-tests:local
+    build:
+      context: ./previewforge-demo
+      target: test
+    environment:
+      <<: *app-environment
+      DATABASE_HOST: test-db
+      DATABASE_NAME: previewforge_test
+    depends_on:
+      test-db: {condition: service_healthy}
+
+volumes:
+  postgres-data:
+  floci-data:
+
+secrets:
+  db_password:
+    file: ${PREVIEWFORGE_RUNTIME_DIR:?Run scripts/dev.ps1 first}/db_password
