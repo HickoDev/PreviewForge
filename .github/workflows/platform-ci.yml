@@ -27,7 +27,7 @@ jobs:
           FLOCI_IMAGE=$(python3 -c 'import json; print(json.load(open("bootstrap/milestone5-tools.lock.json"))["floci"])')
           docker run --detach --name previewforge-terraform-ci --publish 127.0.0.1:4566:4566 --env FLOCI_STORAGE_MODE=memory "$FLOCI_IMAGE"
           trap 'docker rm --force previewforge-terraform-ci' EXIT
-          for attempt in $(seq 1 60); do
+          for _ in $(seq 1 60); do
             if curl --fail --silent http://127.0.0.1:4566/health >/dev/null; then break; fi
             sleep 2
           done
