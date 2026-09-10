@@ -105,5 +105,5 @@ def test_migrations_repeatable_and_match_models(db):
     with db.connect() as connection:
         assert (
             connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-            == "0001_tasks"
+            == "0002_exports"
         )

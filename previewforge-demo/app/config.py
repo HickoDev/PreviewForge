@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import SecretStr
+from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
@@ -16,6 +16,18 @@ class Settings(BaseSettings):
     environment_name: str = "local"
     source_sha: str = "local-uncommitted"
     enable_failure_exercise: bool = False
+    exports_enabled: bool = False
+    floci_endpoint: str = ""
+
+    @model_validator(mode="after")
+    def local_exports(self):
+        if self.exports_enabled:
+            from app.aws import ENDPOINTS, environment_name
+
+            if self.floci_endpoint not in ENDPOINTS:
+                raise ValueError("Exports require an explicit approved local Floci endpoint")
+            environment_name(self.environment_name)
+        return self
 
     def database_url(self) -> URL:
         password = SecretStr(self.database_password_file.read_text().strip())
