@@ -190,6 +190,36 @@ def resume_worker(journal):
     save(journal)
 
 
+def crash_after_upload(namespace):
+    def attempt():
+        try:
+            p.k(
+                "-n",
+                namespace,
+                "exec",
+                "deployment/demo-api",
+                "--",
+                "python",
+                "-m",
+                "app.worker",
+                "--once",
+                "--crash-after-upload",
+                quiet=True,
+                timeout=45,
+            )
+        except RuntimeError as exc:
+            r.require(
+                re.search(r"(?:exit code |failed \()73\b", str(exc)),
+                "Worker did not reach the injected crash: " + str(exc),
+            )
+            return True
+        return False
+
+    # A receive already in flight can lease the message to the paused consumer.
+    # Wait for that lease to expire instead of assuming the next receive must return it.
+    p.wait_for("worker upload and injected process exit 73", attempt, 75)
+
+
 def close_pr(pr):
     value = api("pulls/" + str(pr["number"]))
     r.require(value["head"]["ref"] == pr["branch"], "Acceptance PR branch changed")
@@ -317,25 +347,7 @@ def verify():
                 try:
                     code, job = p.http("/exports", method="POST", payload={}, port=18051)
                     r.require(code == 202, "Crash test request failed")
-                    try:
-                        p.k(
-                            "-n",
-                            names[0],
-                            "exec",
-                            "deployment/demo-api",
-                            "--",
-                            "python",
-                            "-m",
-                            "app.worker",
-                            "--once",
-                            "--crash-after-upload",
-                            quiet=True,
-                            timeout=45,
-                        )
-                    except RuntimeError as exc:
-                        r.require("73" in str(exc), "Worker did not reach the injected crash")
-                    else:
-                        raise RuntimeError("Worker failed to crash after uploading")
+                    crash_after_upload(names[0])
                     key = "exports/" + job["id"] + ".json"
                     cloud.s3.head_object(Bucket=cloud.bucket, Key=key)
                     r.require(

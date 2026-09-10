@@ -25,6 +25,19 @@ def acceptance_module():
 
 
 class ResourceGuards(unittest.TestCase):
+    def test_crash_probe_waits_for_message_visibility(self):
+        check = acceptance_module()
+        with patch.object(
+            check.p,
+            "k",
+            side_effect=[
+                "",
+                RuntimeError("kubectl.exe failed (73): command terminated with exit code 73"),
+            ],
+        ) as execute:
+            check.crash_after_upload("preview-42")
+            self.assertEqual(execute.call_count, 2)
+
     def test_worker_pause_refuses_another_node_before_exec(self):
         check = acceptance_module()
         with (
