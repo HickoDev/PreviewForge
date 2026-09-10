@@ -4,7 +4,7 @@
 
 PreviewForge is a local self-service GitOps platform being built one milestone at a time. This checkout is the platform repository, `HickoDev/PreviewForge`. Milestone 1 supplies a FastAPI task API, PostgreSQL and Floci for simulated S3/SQS. Milestone 2 adds kind, Helm and Argo CD for persistent local staging.
 
-The demo application lives in `previewforge-demo/` with its own dependencies, tests, migrations and Dockerfile. Keeping it here initially makes a single checkout runnable. It remains a separate logical component; a second remote repository requires discussion before GitHub automation is introduced.
+The demo application lives in `previewforge-demo/` with its own dependencies, tests, migrations and Dockerfile. Keeping it here initially makes a single checkout runnable. GitHub automation uses this one repository; a second remote repository requires discussion.
 
 ## Run on Windows
 
@@ -36,7 +36,7 @@ The wrapper generates a database password under `%LOCALAPPDATA%\PreviewForge\run
 
 See [setup and API examples](docs/setup.md), [architecture and decisions](docs/architecture.md) and [Milestone 1 review and verification results](docs/results/milestone-1-review.md).
 
-## Local Kubernetes staging
+## Local Kubernetes staging (initial local mode)
 
 With Python 3.12, Docker Desktop and Git available, run:
 
@@ -56,19 +56,27 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 statu
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 stop
 ```
 
-See [Kubernetes setup, ownership and demo instructions](docs/kubernetes.md) and [Milestone 2 review and results](docs/results/milestone-2-review.md). This uses a read-only local Git fixture and locally loaded application images. GitHub PR delivery and image publication remain later work. The Milestone 1 Compose stack can run alongside staging and continues to own Floci.
+See [Kubernetes setup, ownership and demo instructions](docs/kubernetes.md) and [Milestone 2 review and results](docs/results/milestone-2-review.md). This uses a read-only local Git fixture and locally loaded application images. For the configured GitHub/GHCR mode, use the resume commands below instead of local `up` or `verify`. The Milestone 1 Compose stack can run alongside staging and continues to own Floci.
 
 ## Implementation and verification checklist
 
-Milestone 3 adds local ApplicationSet previews and GitHub automation. See [preview operation and remote activation](docs/previews.md) and [local acceptance results](docs/results/milestone-3.md). The owner has approved remote activation; real GitHub/GHCR integration verification is in progress.
+Milestone 3 connects real GitHub PRs and private GHCR images to local Argo CD previews. See [GitHub-mode startup and recovery](docs/remote.md), [local simulation](docs/previews.md), and [acceptance results](docs/results/milestone-3.md).
+
+On the configured laptop, with Docker Desktop running:
 
 ```powershell
-python scripts/previews.py verify
-python scripts/previews.py demo --pr 42
-python scripts/previews.py forward --pr 42 --port 18042
-# After closing the forward:
-python scripts/previews.py close --pr 42
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 start
+python scripts/previews.py watch --github --apply
 ```
+
+Keep that terminal running. In another terminal:
+
+```powershell
+python scripts/previews.py status --github
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 forward
+```
+
+Open `http://127.0.0.1:18000/docs` for staging. Forward an active PR with `python scripts/previews.py forward --github --pr 123 --port 18042`, replacing `123` with its PR number. The two acceptance PRs are closed after verification.
 
 - [x] Milestone 1 implementation: API, migrations, container build, Compose, structured request logs and synthetic seed command.
 - [x] Milestone 1 verification: clean startup, PostgreSQL CRUD, 27 passing unit/integration tests and migration lifecycle.
@@ -79,12 +87,12 @@ python scripts/previews.py close --pr 42
 - [x] Milestone 2 verification: eight offline guard/fixture tests, database/PVC persistence and documented cluster stop/start.
 - [x] Milestone 3 implementation: ApplicationSet, validated build records, per-preview databases and owned cleanup/reconciliation.
 - [x] Milestone 3 local verification: two previews, isolated data, individual updates, stale/failed-build rejection, main-source staging and complete cleanup.
-- [x] Milestone 3 preparation: read-only CI, guarded GHCR delivery, conflict-aware config writes, close/scheduled reconciliation.
-- [ ] Milestone 3 remote acceptance: approved workflow/image publication, private Git/GHCR access and two real GitHub PRs.
+- [x] Milestone 3 automation: read-only CI, guarded GHCR delivery, conflict-aware config writes, close/scheduled reconciliation.
+- [x] Milestone 3 remote acceptance: two real PRs, private Git/GHCR delivery, failed/stale/closed-build rejection, missed-event cleanup and merge-to-staging delivery.
 - [ ] Milestone 4: Prometheus/Grafana dashboards, alerts and measured recovery.
 - [ ] Milestone 5: Terraform-managed Floci resources, local reconciler and asynchronous exports.
 - [ ] Milestone 6: evidence-backed NVIDIA-hosted NIM diagnostics, starting with mock mode.
 
 `ai-assistant/.env.example` contains design placeholders only. No AI service/provider has been implemented or called, and no NVIDIA key is needed. Live hosted inference will require separate opt-in and privately configured credentials at Milestone 6.
 
-GitHub/GHCR activation is authorized and being verified. The repository and application images must stay private; local services remain bound to loopback. No real cloud resources are provisioned. Floci checks prove the listed emulated API operations, not real AWS deployment or tenant security. Kubernetes namespace/storage separation is not a claim of enforced network isolation.
+GitHub/GHCR delivery is enabled with the owner's approval. The repository and application images must stay private; local services remain bound to loopback. No real cloud resources are provisioned. Floci checks prove the listed emulated API operations, not real AWS deployment or tenant security. Kubernetes namespace/storage separation is not a claim of enforced network isolation.

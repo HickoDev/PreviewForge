@@ -1,13 +1,15 @@
-# Milestone 3: local acceptance and remote delivery preparation
+# Milestone 3: local and real GitHub delivery
 
-This report records Milestone 3's local verification before remote activation. The platform repository remains `HickoDev/PreviewForge`, with the demo application in its existing subdirectory. At the time of this local run, no workflow or image had been published. The owner subsequently approved remote activation on September 10, 2026; remote verification is in progress and is not claimed by the local results below.
+Milestone 3 is verified locally and through real GitHub PRs, Actions and private GHCR images. See [the remote acceptance report](milestone-3-remote.md) for the completed integration, fixes, run links and startup checks. The platform repository remains `HickoDev/PreviewForge`, with the demo application in its existing subdirectory.
+
+The sections below preserve the earlier local verification. At that time no workflow or image had been published. The owner subsequently approved remote activation on September 10, 2026; the historical synthetic results remain separate from the real integration evidence.
 
 ## Changes
 
 - Preview records with repository/PR identity, immutable image digest, source SHA, run metadata and expiry; successful/current/trusted build checks and conflict-aware Git writes.
 - Git file ApplicationSet, restricted preview project, per-preview PostgreSQL/PVC, quotas, synthetic seeds and disposable storage distinct from staging's retained PVC.
 - Ownership/UID-checked namespace reconciliation, cascading Argo deletion, dry-run orphan planning and idempotent cleanup after missed events or interruptions.
-- Portable application CI, isolated test databases, source-labeled build artifacts, trusted artifact-consuming delivery, and scheduled/close reconciliation. Privileged workflows are disabled by a repository-variable gate.
+- Portable application CI, isolated test databases, source-labeled build artifacts, trusted artifact-consuming delivery, and scheduled/close reconciliation. Privileged workflows default to disabled and were enabled for the approved remote acceptance.
 - Local demo/forward/close/verify commands and prepared remote manifests/read-only GitHub polling. Local bootstrap refuses to replace a remote staging source.
 
 ## Verified locally
@@ -35,15 +37,16 @@ Final inspection found only the retained staging PV and a `Synced`/`Healthy` sta
 
 The first development run continued successfully after applying the naming fix. It is not the final uninterrupted result used as evidence.
 
-## Remaining / blocked
+## Scope and remaining limitations
 
-- Publication and controlled remote verification were subsequently approved by the owner. The original local results below remain separate from remote integration evidence.
-- Actions execution on GitHub-hosted Linux, actual CI-run/artifact metadata, GHCR publication/pulls, private Git authentication, real simultaneous PRs, real merge-to-staging delivery and remote missed-event recovery remain untested.
-- Argo needs privately configured read-only Git access; the local watcher needs a privately configured GHCR pull Secret. No secret was requested in chat or added to Git. Repository branch/package policies have not been changed.
-- Mocked provider/API regressions prove the tested code paths, not real GitHub delivery. Preview namespaces do not provide tested network isolation. Fresh-machine setup and loss/recreation of the kind node were not tested.
+- GitHub-hosted CI, artifact provenance, private GHCR publication/pulls, SSH Git access, two real PRs, merge-to-staging delivery and remote missed-event recovery subsequently passed; see the separate remote report.
+- Argo's read-only deploy key and the laptop's minimal GHCR pull Secret are configured privately. No secret was sent through chat or committed to Git. Repository/package visibility remains private.
+- Mocked provider/API regressions cover races and expiry that are identified separately from the live tests. Preview namespaces do not provide tested network isolation. Fresh-machine setup and loss/recreation of the kind node were not tested.
 - Floci/Terraform integration remains Milestone 5; monitoring dashboards remain Milestone 4; NVIDIA inference remains a later mock-first milestone. Those services were not added here.
 
 ## Reproduce
+
+On the configured laptop, use [GitHub-mode startup and recovery](../remote.md). The following commands belong to the separate local-mode demonstration and refuse to replace remote staging:
 
 ```powershell
 python -m unittest discover -s tests/platform -v
@@ -55,4 +58,4 @@ python scripts/previews.py forward --pr 42 --port 18042
 python scripts/previews.py close --pr 42
 ```
 
-See [operation and the concrete remote activation steps](../previews.md). Finish Milestone 3's approved remote acceptance before moving to Milestone 4.
+See [local operation and activation reference](../previews.md). Milestone 4 has not been started.

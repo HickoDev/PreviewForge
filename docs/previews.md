@@ -1,6 +1,6 @@
 # Milestone 3: preview lifecycle
 
-The local implementation runs real ApplicationSet-generated applications on kind. GitHub PR events and successful publication are represented by a synthetic provider in local mode. The owner has approved GitHub Actions/GHCR activation; remote integration verification is in progress.
+The local implementation runs real ApplicationSet-generated applications on kind. GitHub PR events and successful publication are represented by a synthetic provider in local mode. Real GitHub Actions/GHCR delivery is also activated. Use [GitHub-mode startup](remote.md) on the configured laptop; the commands below describe the separate local simulation.
 
 The demo stays in `previewforge-demo/` inside `HickoDev/PreviewForge`. Application inputs and deployment records have separate paths and ownership. No second remote repository is required. The CI path filter excludes `gitops/`, preventing configuration commits from starting another image build.
 
@@ -58,9 +58,9 @@ Bootstrap/reconciliation owns namespaces and randomly generated database Secrets
 
 Removing a record makes ApplicationSet delete its Application. The Argo finalizer removes workloads and the disposable PVC. The local reconciler then checks ownership labels, absence of the Application, current desired state and the namespace UID before issuing a namespace deletion with an API UID precondition. It verifies namespace and PV absence. Interrupted cleanup can be rerun. Staging retains Milestone 2's PVC annotations and `Retain` storage policy and is excluded from preview selection.
 
-## Prepared GitHub delivery
+## GitHub delivery
 
-The workflows are reviewable code, not evidence of a remote deployment:
+The workflows have been exercised on GitHub; see the separate remote evidence in the [Milestone 3 report](results/milestone-3.md):
 
 **Platform CI** separately runs the offline lifecycle tests, Python lint/format checks and checksum-verified Actionlint when platform paths change.
 
@@ -72,13 +72,13 @@ Both writing workflows require the repository variable `PREVIEWFORGE_REMOTE_ENAB
 
 For main, intervening configuration-only commits do not invalidate a successful application build. A newer application-input change or diverged history rejects it. Staging receives the successful main build's source SHA, which may differ from the PR SHA. Protected-branch policies may reject automated config writes; changing repository policies is not part of local setup.
 
-## Remote activation after approval
+## Remote activation reference
 
 The owner explicitly approved workflow publication, GHCR image publication and controlled test PRs on September 10, 2026. The following procedure documents that activation. No public service or inbound connection to this laptop is needed.
 
-After approval, the remaining integration work is:
+Activation uses these steps:
 
-1. Push the reviewed workflows and enable the writing-workflow variable. Run CI and validate the actual artifact/run metadata and GHCR digest using real trusted PRs.
+1. Push the reviewed workflows and enable the writing-workflow variable. Run CI and validate the actual artifact/run metadata and GHCR digest using real trusted PRs. Verify the private package's repository association with the owner's pull credential and set its non-secret ID as `PREVIEWFORGE_PACKAGE_ID`; Actions can omit that association from its own API response.
 2. Configure a repository-only read-only SSH deploy key for Argo. Its private key stays outside Git and in the `argocd` namespace. GitHub host keys come from the authenticated GitHub metadata API. Separately create a HickoDev classic PAT with **only** `read:packages`, then run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-registry.ps1`. The hidden prompt verifies the token's account and minimal scope before placing it in the local registry Secret. Never put token values in chat, shell arguments or Git. The normal `gh` account/scopes are unchanged.
 3. Create a `kubernetes.io/dockerconfigjson` Secret named `previewforge-ghcr` in `argocd`, labeled `previewforge.io/owner=previewforge-m3`. The local reconciler copies only that registry Secret to staging and desired preview namespaces. API credentials remain namespace-local. Argo's Git repository credential stays in `argocd` and is never copied to previews.
 4. Review the generated remote manifests, then apply them only after the first successful main record exists. Rendering itself performs no GitHub or cluster write:
@@ -95,7 +95,7 @@ python scripts/previews.py watch --github --apply         # keep this foreground
 python scripts/previews.py forward --github --pr 42 --port 18042
 ```
 
-The watcher polls read-only GitHub APIs through guarded `gh`; Argo independently polls Git. Stop it with Ctrl+C before other mutating local commands. A provider/API error stops the command without guessing that records are absent; restore access and restart it. Local bootstrap refuses to replace a remote staging source, and reconciliation refuses a source mode that differs from ApplicationSet. Remote credential setup, authenticated polling and GHCR pulls remain untested until activation.
+The watcher polls read-only GitHub APIs through guarded `gh`; Argo independently polls Git. Stop it with Ctrl+C before other mutating local commands. A provider/API error stops the command without guessing that records are absent; restore access and restart it. Local bootstrap refuses to replace a remote staging source, and reconciliation refuses a source mode that differs from ApplicationSet. Private SSH reads, GHCR pulls, polling and the foreground watcher have been tested. The configured laptop now uses the resume procedure in [GitHub mode](remote.md); local `verify` is not a remote acceptance command.
 
 ## Checks and sources
 
