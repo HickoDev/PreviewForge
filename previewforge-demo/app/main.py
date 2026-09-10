@@ -82,7 +82,7 @@ def create_app(settings: Settings | None = None, engine=None):
         session.execute(select(Task.id).limit(1))
         return {"status": "ready", "database": "connected"}
 
-    @app.get("/version")
+    @app.get("/version", summary="Show deployed source and environment")
     def version():
         return {"source_sha": settings.source_sha, "environment": settings.environment_name}
 
