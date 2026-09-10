@@ -1,6 +1,6 @@
 # Milestone 2: local Kubernetes and GitOps
 
-This milestone runs the real task API and PostgreSQL on a single-node kind cluster. Argo CD reads a local Git repository, renders the Helm chart, runs migrations and reconciles persistent staging. It does not yet implement GitHub Actions or PR previews.
+This milestone runs the real task API and PostgreSQL on a single-node kind cluster. Argo CD reads a local Git repository, renders the Helm chart, runs migrations and reconciles persistent staging. [Milestone 3](previews.md) extends this setup with ApplicationSet previews and prepared GitHub delivery.
 
 ## Start on Windows
 
@@ -89,7 +89,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 publi
 - Bootstrap owns the dedicated cluster, Argo CD installation, staging namespace, retention StorageClass, database Secret and local Git transport.
 - Argo CD owns the chart's API, database StatefulSet, Services, migration Job, quota and PVC declaration. Helm renders templates; bootstrap never performs a competing `helm install` of the demo app.
 - PostgreSQL and its PVC share a sync wave because local storage uses `WaitForFirstConsumer`. The migration job runs after database readiness and before the API rollout. Its two-minute deadline bounds a failed migration; the most recent job stays available for inspection.
-- Staging PVC annotations disable Argo pruning/deletion, and the PV reclaim policy is `Retain`. Deleting the Argo Application does not cascade into staging workloads. This is deliberate persistent staging behavior; disposable preview cleanup has different requirements and is not implemented yet.
+- Staging PVC annotations disable Argo pruning/deletion, and the PV reclaim policy is `Retain`. Deleting the Argo Application does not cascade into staging workloads. This is deliberate persistent staging behavior; [Milestone 3](previews.md) uses a separate disposable storage class and cascading cleanup for previews.
 - API/migrations run as UID 10001 with read-only root filesystems, dropped capabilities and no mounted Kubernetes service-account token. PostgreSQL runs as its image's UID 70. Resources and namespace quotas bound this small demo.
 - The default kind CNI is used. Namespace separation is not a verified tenant security boundary; no NetworkPolicy isolation is claimed.
 

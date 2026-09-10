@@ -16,12 +16,12 @@ The task API does not use S3/SQS yet. The smoke clients establish verified emula
 
 | Component | Owns now | Planned later |
 | --- | --- | --- |
-| `previewforge-demo/` | API source, migrations, seed data, tests, Dockerfile | Worker and application-image CI |
-| Platform repository root | Compose, kind bootstrap, Helm chart, local Argo CD staging, acceptance scripts and results | PR lifecycle, Terraform, monitoring dashboards, AI service |
-| PostgreSQL | Real persisted synthetic task records | Separate instance/storage per environment |
+| `previewforge-demo/` | API source, migrations, seed data, tests, Dockerfile | Export worker |
+| Platform repository root | Compose, kind, Helm, staging, local preview lifecycle, prepared CI/delivery, acceptance scripts and results | Remote delivery acceptance, Terraform, monitoring dashboards, AI service |
+| PostgreSQL | Separate real instances/storage for staging and each preview | Export status/worker integration |
 | Floci | Simulated S3 objects and SQS messages | Per-environment Terraform resources |
 
-There is one remote repository. Keeping the logical demo component inside this checkout avoids an untracked sibling dependency. Before Milestone 3, review whether to split that component into a separately authorized application repository. Deployment-config changes must not trigger application-image rebuilds.
+There is one remote repository. The logical demo component remains inside this checkout for Milestone 3. No additional remote was created; a later split would require discussion. Path-filtered CI separates application builds from deployment-config changes.
 
 ## Database and health
 
@@ -72,6 +72,10 @@ The chart orders database readiness, schema migration and API rollout. Staging h
 The local Git fixture demonstrates actual Argo reconciliation without publishing images or installing GitHub credentials in the cluster. It is not a tested GitHub-to-preview workflow. See [Milestone 2 operation and limitations](kubernetes.md) for exact commands and ownership boundaries.
 
 ## Dependency sources and update procedure
+
+Milestone 3 extends the staging chart with explicitly disposable preview storage and idempotent synthetic seeds. A Git file ApplicationSet generates an application only from a successful build record. The local reconciler owns namespaces and secrets; Argo owns application workloads and PVCs. Argo's deletion finalizer and a separate ownership/UID-checked namespace cleanup complete the preview lifecycle.
+
+The existing remote contains both logical components. CI builds only when application input paths change; a deployment-record commit does not trigger another build. Trusted default-branch delivery code validates build provenance and live PR/main state, then updates selected Git records with conflict-aware retries. Forks do not deploy. GitHub automation and GHCR publication remain disabled/unverified until separately approved. [Preview operation and activation](previews.md) documents those boundaries.
 
 - [Floci 2.0.1 configuration](https://github.com/floci-io/floci/blob/2.0.1/docs/configuration/environment-variables.md), [S3](https://github.com/floci-io/floci/blob/2.0.1/docs/services/s3.md), [SQS](https://github.com/floci-io/floci/blob/2.0.1/docs/services/sqs.md).
 - [FastAPI container guide](https://fastapi.tiangolo.com/deployment/docker/).

@@ -18,13 +18,18 @@ spec:
     spec:
       restartPolicy: Never
       automountServiceAccountToken: false
+      imagePullSecrets: {{ .Values.imagePullSecrets | toJson }}
       securityContext:
         {{- include "demo.security" . | nindent 8 }}
       containers:
         - name: migrate
           image: {{ include "demo.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.seed }}
+          command: ["/bin/sh", "-ec", "alembic upgrade head && python -m app.seed"]
+          {{- else }}
           command: [alembic, upgrade, head]
+          {{- end }}
           env:
             {{- include "demo.environment" . | nindent 12 }}
           securityContext:

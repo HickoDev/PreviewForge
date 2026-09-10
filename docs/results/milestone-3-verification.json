@@ -1,0 +1,43 @@
+{
+  "startedAt": "2026-09-09T23:24:29.652618+00:00",
+  "scope": "local kind/ApplicationSet + synthetic PR provider; no GitHub/GHCR delivery",
+  "checks": [
+    {
+      "name": "Application tests and platform regressions; staging baseline healthy",
+      "at": "2026-09-09T23:25:29.245166+00:00",
+      "stagingPvcUid": "cfda1bb8-cce6-456e-acfc-444de8357872"
+    },
+    {
+      "name": "Two simultaneous ApplicationSet previews, seeded isolated databases and distinct disposable PVs",
+      "at": "2026-09-09T23:26:23.872226+00:00",
+      "previewA": "preview-970586793",
+      "previewB": "preview-970586794"
+    },
+    {
+      "name": "PR A update changes its image/source only and retains both databases",
+      "at": "2026-09-09T23:27:11.306750+00:00",
+      "sourceA": "b458c43419c65a8a15d27749ba82ecf56dad14e1",
+      "sourceB": "2c13ce557d74590b73be1921e84bfcdbeb4aff83"
+    },
+    {
+      "name": "Stale, failed and unpublished completions leave Git and the running preview unchanged",
+      "at": "2026-09-09T23:27:14.468802+00:00"
+    },
+    {
+      "name": "Closing A cascades workloads/PVC/PV then removes its namespace; B and staging survive; late completion rejected",
+      "at": "2026-09-09T23:27:55.035803+00:00"
+    },
+    {
+      "name": "Successful simulated main build deploys its own source SHA and retains staging PVC/tasks",
+      "at": "2026-09-09T23:28:30.359861+00:00",
+      "mainSource": "25ac19092db837b7ac843d983ae944c2d6d6b1ef",
+      "mainDigest": "sha256:8be4e64808a8103273f3a80a917e7d790af7d3e84b0aa08a2e86fe5f4fb1383a"
+    },
+    {
+      "name": "Missed-close reconciliation and resumed cleanup remove B fully; dry-run is read-only; staging stays functional",
+      "at": "2026-09-09T23:28:54.137321+00:00"
+    }
+  ],
+  "status": "passed",
+  "completedAt": "2026-09-09T23:28:55.275023+00:00"
+}

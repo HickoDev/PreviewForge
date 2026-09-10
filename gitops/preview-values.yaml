@@ -1,0 +1,7 @@
+# Disposable synthetic data; staging keeps the chart's retention defaults.
+preview: {enabled: true}
+seed: true
+database:
+  existingSecret: preview-db
+  retain: false
+  storageClass: previewforge-disposable

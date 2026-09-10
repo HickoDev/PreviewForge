@@ -84,9 +84,7 @@ def main():
 
     wait_ready()
     expected_version = {"source_sha": args.expected_sha, "environment": "local"}
-    assert json.loads(request("/version")[1]) == expected_version, (
-        "Wrong deployed source SHA"
-    )
+    assert json.loads(request("/version")[1]) == expected_version, "Wrong deployed source SHA"
     for path in ["/docs", "/openapi.json", "/health/live", "/health/ready", "/version"]:
         assert request(path)[0] == 200, path
     status, body = request(
@@ -143,20 +141,11 @@ def main():
     assert "synthetic-log-canary" not in logs and "synthetic-query-canary" not in logs
     events = [json.loads(line) for line in logs.splitlines() if line.startswith("{")]
     assert any(
-        event.get("status") == 503 and event.get("route") == "/health/ready"
-        for event in events
+        event.get("status") == 503 and event.get("route") == "/health/ready" for event in events
     )
-    assert all(
-        "request_id" in event
-        for event in events
-        if event.get("event") == "http_request"
-    )
-    assert (
-        compose("exec", "-T", "api", "id", "-u", capture=True).stdout.strip() == "10001"
-    )
-    print(
-        "PASS: structured/sanitized request logs and non-root API process", flush=True
-    )
+    assert all("request_id" in event for event in events if event.get("event") == "http_request")
+    assert compose("exec", "-T", "api", "id", "-u", capture=True).stdout.strip() == "10001"
+    print("PASS: structured/sanitized request logs and non-root API process", flush=True)
     print(
         json.dumps(
             {
