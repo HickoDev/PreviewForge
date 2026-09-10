@@ -31,6 +31,13 @@ tests:
     interval: 5s
     alert_rule_test:
       - {eval_time: 90s, alertname: PreviewForgeHighErrorRate, exp_alerts: []}
+      - eval_time: 90s
+        alertname: PreviewForgeTelemetryMissing
+        exp_alerts:
+          - exp_labels: {job: argocd, severity: warning}
+            exp_annotations: {summary: Workload or deployment telemetry is unavailable}
+          - exp_labels: {job: kube-state-metrics, severity: warning}
+            exp_annotations: {summary: Workload or deployment telemetry is unavailable}
   - name: Failed deployment is detected independently of the old serving API
     interval: 5s
     input_series:

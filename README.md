@@ -2,7 +2,7 @@
 
 **A test environment for every pull request.**
 
-PreviewForge is a local self-service GitOps platform being built one milestone at a time. This checkout is the platform repository, `HickoDev/PreviewForge`. Milestone 1 supplies a FastAPI task API, PostgreSQL and Floci for simulated S3/SQS. Milestone 2 adds kind, Helm and Argo CD for persistent local staging.
+PreviewForge is a local self-service GitOps platform being built one milestone at a time. This checkout is the platform repository, `HickoDev/PreviewForge`. Milestone 1 supplies a FastAPI task API, PostgreSQL and Floci for simulated S3/SQS. Milestone 2 adds kind, Helm and Argo CD for persistent local staging. Milestone 3 connects private GitHub/GHCR delivery to PR previews; Milestone 4 adds local monitoring and recovery exercises.
 
 The demo application lives in `previewforge-demo/` with its own dependencies, tests, migrations and Dockerfile. Keeping it here initially makes a single checkout runnable. GitHub automation uses this one repository; a second remote repository requires discussion.
 
@@ -58,7 +58,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 stop
 
 See [Kubernetes setup, ownership and demo instructions](docs/kubernetes.md) and [Milestone 2 review and results](docs/results/milestone-2-review.md). This uses a read-only local Git fixture and locally loaded application images. For the configured GitHub/GHCR mode, use the resume commands below instead of local `up` or `verify`. The Milestone 1 Compose stack can run alongside staging and continues to own Floci.
 
-## Implementation and verification checklist
+## Real PR environments
 
 Milestone 3 connects real GitHub PRs and private GHCR images to local Argo CD previews. See [GitHub-mode startup and recovery](docs/remote.md), [local simulation](docs/previews.md), and [acceptance results](docs/results/milestone-3.md).
 
@@ -77,6 +77,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 forwa
 ```
 
 Open `http://127.0.0.1:18000/docs` for staging. Forward an active PR with `python scripts/previews.py forward --github --pr 123 --port 18042`, replacing `123` with its PR number. The two acceptance PRs are closed after verification.
+
+## Monitoring
+
+With the configured cluster running, open the environment dashboard:
+
+```powershell
+python scripts/monitoring.py up
+python scripts/monitoring.py forward --service grafana
+```
+
+Use **http://127.0.0.1:13000/d/previewforge** and select staging or a running preview. In another terminal, `python scripts/monitoring.py forward --service prometheus` opens **http://127.0.0.1:19090/alerts**. Both forwards bind only to this computer. See [startup, alerts and controlled recovery exercises](docs/observability.md).
+
+## Implementation and verification checklist
 
 - [x] Milestone 1 implementation: API, migrations, container build, Compose, structured request logs and synthetic seed command.
 - [x] Milestone 1 verification: clean startup, PostgreSQL CRUD, 27 passing unit/integration tests and migration lifecycle.

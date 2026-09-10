@@ -215,6 +215,7 @@ def main():
     import msvcrt
 
     with (p.RUNTIME / "operation.lock").open("a+b") as lock:
+        lock.seek(0)
         msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
         if args.action == "up":
             up()
