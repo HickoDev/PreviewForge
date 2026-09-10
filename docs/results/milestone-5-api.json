@@ -1,0 +1,14 @@
+{
+  "ready": {
+    "status": "ready",
+    "database": "connected",
+    "exports": "ready"
+  },
+  "version": {
+    "source_sha": "79a64d6c752601d2f1afaee22743fe1682eedd70",
+    "environment": "staging"
+  },
+  "exportRoutesInOpenApi": true,
+  "powershellExportId": "79371134-88ca-41e6-b4ca-1da9ec3d1d74",
+  "powershellDownloadedTaskCount": 3
+}

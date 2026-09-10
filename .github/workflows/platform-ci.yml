@@ -1,10 +1,10 @@
 name: Platform CI
 on:
   pull_request:
-    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', 'observability/**', 'terraform/**', 'reconciler/**', 'bootstrap/**', '.github/workflows/**']
+    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', 'observability/**', 'terraform/**', 'reconciler/**', 'bootstrap/**', '.github/workflows/**', 'previewforge-demo/app/aws.py', 'previewforge-demo/app/floci_smoke.py', 'previewforge-demo/requirements*.lock', 'previewforge-demo/pyproject.toml', 'previewforge-demo/Dockerfile']
   push:
     branches: [main]
-    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', 'observability/**', 'terraform/**', 'reconciler/**', 'bootstrap/**', '.github/workflows/**']
+    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', 'observability/**', 'terraform/**', 'reconciler/**', 'bootstrap/**', '.github/workflows/**', 'previewforge-demo/app/aws.py', 'previewforge-demo/app/floci_smoke.py', 'previewforge-demo/requirements*.lock', 'previewforge-demo/pyproject.toml', 'previewforge-demo/Dockerfile']
 permissions:
   contents: read
 jobs:

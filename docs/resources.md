@@ -53,11 +53,15 @@ Open http://127.0.0.1:18000/docs. From another terminal, request and download a 
 
 ```powershell
 $reportJob = Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18000/exports -ContentType application/json -Body '{}'
+$reportDeadline = (Get-Date).AddSeconds(60)
 do {
     Start-Sleep -Seconds 1
     $reportStatus = Invoke-RestMethod "http://127.0.0.1:18000/exports/$($reportJob.id)"
-} while ($reportStatus.status -ne 'completed')
-Invoke-WebRequest "http://127.0.0.1:18000/exports/$($reportJob.id)/download" -OutFile "$env:TEMP\previewforge-report.json"
+} while ($reportStatus.status -ne 'completed' -and (Get-Date) -lt $reportDeadline)
+if ($reportStatus.status -ne 'completed') { throw 'Export is still pending; check the worker and resource status.' }
+$reportFile = Join-Path $env:TEMP "previewforge-report-$($reportJob.id).json"
+Invoke-WebRequest "http://127.0.0.1:18000/exports/$($reportJob.id)/download" -UseBasicParsing -OutFile $reportFile
+$reportFile
 ```
 
 For two active PRs, use separate terminals and ports (replace the PR numbers):
@@ -99,13 +103,16 @@ All AWS clients use dummy `test` credentials and explicit local endpoints. Host 
 python scripts/ci.py test
 python -m unittest discover -s tests/platform -v
 python scripts/resources.py verify --github --allow-faults --allow-github-writes
+python scripts/verify_resources_startup.py --allow-faults
 ```
 
-The last command creates two temporary real PRs, triggers private image publication, updates one PR, introduces bounded faults, and closes/deletes only its own acceptance artifacts. Stop the normal watcher first; both use the same operation lock. It preserves existing staging tasks. It writes its result and recovery journal into the private M5 runtime. If interrupted:
+The PR verification command creates two temporary real PRs, triggers private image publication, updates one PR, introduces bounded faults, and closes/deletes only its own acceptance artifacts. Stop the normal watcher first; verification uses the same operation lock. Existing staging tasks are preserved. Results and recovery journals stay in the private M5 runtime. If the PR exercise is interrupted:
 
 ```powershell
 python scripts/resources.py recover --github --allow-github-writes
 ```
+
+The startup check stops only the retained PreviewForge kind node and Floci container, runs the documented `resources.py up --github` command, and checks the API, saved report, tasks, container identities and PVCs. It attempts to resume the services if the check fails. After an interrupted startup check, run the normal startup command again.
 
 Platform CI additionally runs real Terraform apply, empty second plan, missing-resource repair, owned state import, and nonempty-bucket destroy against an isolated Floci container, with independent SDK checks. See [recorded acceptance results](results/milestone-5.md) for what was actually verified.
 

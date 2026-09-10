@@ -1,0 +1,10 @@
+{
+  "at": "2026-09-10T13:14:17.353692+00:00",
+  "environment": "staging",
+  "exportId": "c44b0b13-6f3d-4635-9dc5-a4d0be236e46",
+  "exitCode": 73,
+  "pendingAfterCrash": true,
+  "completedAfterRedelivery": true,
+  "objectCount": 1,
+  "tasksPreserved": true
+}

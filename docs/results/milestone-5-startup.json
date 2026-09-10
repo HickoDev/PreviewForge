@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-09-10T13:42:19.075344+00:00",
+  "startupSeconds": 74.14,
+  "completedAt": "2026-09-10T13:44:14.562002+00:00",
+  "passed": true,
+  "stagingPvcUid": "cfda1bb8-cce6-456e-acfc-444de8357872",
+  "monitoringPvcUids": {
+    "previewforge-prometheus": "4c4d3d40-290b-45b7-9199-f40da25513aa"
+  },
+  "taskCount": 3,
+  "exportId": "a82c7afc-44f5-48a8-8147-a30d49ad19ea",
+  "reportSha256": "f85b16a79ff6a6723d4a5e949630a173ee8701eb8c44d777809b9748c4cb9b46",
+  "reportRebuilt": false,
+  "containersPreserved": true
+}

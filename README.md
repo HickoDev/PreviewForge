@@ -112,7 +112,8 @@ See [startup, report commands and recovery](docs/resources.md) and [Milestone 5 
 - [x] Milestone 3 remote acceptance: two real PRs, private Git/GHCR delivery, failed/stale/closed-build rejection, missed-event cleanup and merge-to-staging delivery.
 - [x] Milestone 4 implementation: Prometheus/Grafana, automatic workload discovery, eight dashboard panels and seven alert rules.
 - [x] Milestone 4 verification: two live fault/recovery/preview-cleanup trials, retained metric history and data across restart, and working terminal startup/stop commands.
-- [ ] Milestone 5: Terraform-managed Floci resources, local reconciler and asynchronous exports.
+- [x] Milestone 5: Terraform-managed Floci resources, local reconciler and asynchronous exports.
+- [x] Milestone 5 verification: real PR exports/update/cleanup, process-crash redelivery, resource reset, interrupted reconciliation, state recovery and documented startup.
 - [ ] Milestone 6: evidence-backed NVIDIA-hosted NIM diagnostics, starting with mock mode.
 
 `ai-assistant/.env.example` contains design placeholders only. No AI service/provider has been implemented or called, and no NVIDIA key is needed. Live hosted inference will require separate opt-in and privately configured credentials at Milestone 6.
