@@ -1,0 +1,64 @@
+rule_files: [../alerts/rules.yml]
+evaluation_interval: 5s
+tests:
+  - name: Sustained errors with traffic fire; ordinary 4xx are excluded
+    interval: 5s
+    input_series:
+      - series: previewforge_http_requests_total{namespace="staging",route="/tasks",status="200"}
+        values: 0+18x30
+      - series: previewforge_http_requests_total{namespace="staging",route="/tasks",status="503"}
+        values: 0+2x30
+    alert_rule_test:
+      - eval_time: 90s
+        alertname: PreviewForgeHighErrorRate
+        exp_alerts:
+          - exp_labels: {namespace: staging, severity: warning}
+            exp_annotations:
+              summary: More than 5% server errors in staging under traffic
+              action: Correlate the running source, readiness and database health. Low traffic is not treated as healthy evidence.
+  - name: Low traffic and probe failures do not produce a business error-rate alert
+    interval: 5s
+    input_series:
+      - series: previewforge_http_requests_total{namespace="staging",route="/tasks",status="503"}
+        values: 0+1x30
+      - series: previewforge_http_requests_total{namespace="staging",route="/health/ready",status="503"}
+        values: 0+100x30
+      - series: previewforge_http_requests_total{namespace="preview-42",route="/tasks",status="404"}
+        values: 0+100x30
+    alert_rule_test:
+      - {eval_time: 90s, alertname: PreviewForgeHighErrorRate, exp_alerts: []}
+  - name: Empty input is not claimed as a high error rate
+    interval: 5s
+    alert_rule_test:
+      - {eval_time: 90s, alertname: PreviewForgeHighErrorRate, exp_alerts: []}
+  - name: Failed deployment is detected independently of the old serving API
+    interval: 5s
+    input_series:
+      - series: argocd_app_info{name="staging",sync_status="OutOfSync"}
+        values: 1x30
+      - series: kube_deployment_status_replicas_available{namespace="staging",deployment="demo-api"}
+        values: 1x30
+    alert_rule_test:
+      - eval_time: 60s
+        alertname: PreviewForgeReleaseOutOfSync
+        exp_alerts:
+          - exp_labels: {name: staging, namespace: staging, sync_status: OutOfSync, severity: warning}
+            exp_annotations:
+              summary: Git deployment is not synchronized for staging
+              action: Inspect Argo sync and image-pull events; restore the known-good configuration in Git.
+      - {eval_time: 60s, alertname: PreviewForgeApiUnavailable, exp_alerts: []}
+  - name: Database unavailable is detected per namespace
+    interval: 5s
+    input_series:
+      - series: kube_statefulset_status_replicas_ready{namespace="staging",statefulset="demo-postgres"}
+        values: 0x30
+      - series: kube_statefulset_status_replicas_ready{namespace="preview-42",statefulset="demo-postgres"}
+        values: 1x30
+    alert_rule_test:
+      - eval_time: 30s
+        alertname: PreviewForgeDatabaseUnavailable
+        exp_alerts:
+          - exp_labels: {namespace: staging, statefulset: demo-postgres, severity: critical}
+            exp_annotations:
+              summary: Database unavailable in staging
+              action: Restore the database workload; retain its PVC and verify readiness and saved tasks.

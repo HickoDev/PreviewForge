@@ -98,6 +98,16 @@ def test_liveness_survives_database_failure_and_errors_are_sanitized():
         assert client.get("/version").json()["source_sha"] == "outage-test-sha"
 
 
+@pytest.mark.parametrize("enabled, status", [(False, 404), (True, 503)])
+def test_failure_exercise_is_explicit_and_observable(enabled, status):
+    with TestClient(create_app(Settings(enable_failure_exercise=enabled), Mock())) as client:
+        assert client.get("/test/failure").status_code == status
+        assert ("/test/failure" in client.get("/openapi.json").json()["paths"]) == enabled
+        assert client.get("/health/live").status_code == 200
+        metrics = client.get("/metrics").text
+        assert f'route="/test/failure",status="{status}"' in metrics
+
+
 def test_structured_logs_exclude_exception_contents():
     stream = io.StringIO()
     handler = logging.StreamHandler(stream)

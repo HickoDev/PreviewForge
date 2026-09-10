@@ -1,0 +1,6 @@
+apiVersion: v2
+name: previewforge-observability
+description: Local Prometheus, provisioned Grafana and selected Kubernetes workload metrics
+type: application
+version: 0.1.0
+appVersion: "1"
