@@ -22,7 +22,7 @@ spec:
     metadata:
       labels: {app: previewforge-prometheus}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+        checksum/config: {{ printf "%s\n%s" (.Files.Get "prometheus/prometheus.yml") (.Files.Get "alerts/rules.yml") | sha256sum }}
     spec:
       serviceAccountName: previewforge-prometheus
       securityContext: {runAsNonRoot: true, runAsUser: 65534, runAsGroup: 65534, fsGroup: 65534, seccompProfile: {type: RuntimeDefault}}
@@ -54,7 +54,7 @@ spec:
     metadata:
       labels: {app: previewforge-grafana}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+        checksum/config: {{ printf "%s\n%s\n%s\n%s" (.Files.Get "grafana/grafana.ini") (.Files.Get "grafana/datasources.yml") (.Files.Get "grafana/dashboards.yml") (.Files.Get "grafana/previewforge.json") | sha256sum }}
     spec:
       automountServiceAccountToken: false
       securityContext: {runAsNonRoot: true, runAsUser: 472, runAsGroup: 472, fsGroup: 472, seccompProfile: {type: RuntimeDefault}}

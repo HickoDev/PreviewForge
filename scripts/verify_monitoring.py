@@ -103,9 +103,10 @@ def api_pod(namespace="staging"):
 
 
 @contextmanager
-def traffic(port, path="/tasks"):
+def traffic(port, path="/tasks", workers=1):
     stop = threading.Event()
-    stats = {"requests": 0, "statusCounts": {}}
+    mutex = threading.Lock()
+    stats = {"requests": 0, "statusCounts": {}, "workers": workers}
 
     def generate():
         deadline = time.monotonic() + 360
@@ -114,18 +115,21 @@ def traffic(port, path="/tasks"):
                 code = str(p.http(path, port=port)[0])
             except Exception:
                 code = "connection_error"
-            stats["requests"] += 1
-            stats["statusCounts"][code] = stats["statusCounts"].get(code, 0) + 1
+            with mutex:
+                stats["requests"] += 1
+                stats["statusCounts"][code] = stats["statusCounts"].get(code, 0) + 1
             stop.wait(0.2)
 
-    worker = threading.Thread(target=generate, daemon=True)
-    worker.start()
+    threads = [threading.Thread(target=generate, daemon=True) for _ in range(workers)]
+    for worker in threads:
+        worker.start()
     try:
         yield stats
     finally:
         stop.set()
-        worker.join(timeout=15)
-        if worker.is_alive():
+        for worker in threads:
+            worker.join(timeout=15)
+        if any(worker.is_alive() for worker in threads):
             raise RuntimeError("Traffic worker did not stop")
 
 
@@ -292,6 +296,7 @@ def verify(trials=2):
                         )
                 finally:
                     recovery_start = time.monotonic()
+                    recovery_at = datetime.now(UTC).isoformat()
                     recovery_sha = write_image(
                         bad,
                         baseline,
@@ -312,6 +317,7 @@ def verify(trials=2):
                     "Failed release detected and recovered through Git",
                     trial=trial,
                     committedAt=committed,
+                    recoveryStartedAt=recovery_at,
                     badCommit=bad_sha,
                     recoveryCommit=recovery_sha,
                     detectionSeconds=detected,
@@ -326,9 +332,12 @@ def verify(trials=2):
                 journal["dbPaused"] = True
                 save(journal)
                 started = time.monotonic()
+                outage_at = datetime.now(UTC).isoformat()
                 with (
                     p.forward("pod/" + pod["metadata"]["name"], port=18045),
-                    traffic(18045) as counts,
+                    # A failed database connection can take three seconds. Six bounded
+                    # clients keep completed request traffic above the alert's 1 rps floor.
+                    traffic(18045, workers=6) as counts,
                 ):
                     try:
                         p.patch(
@@ -362,6 +371,7 @@ def verify(trials=2):
                         detected = round(time.monotonic() - started, 3)
                     finally:
                         recovery_start = time.monotonic()
+                        recovery_at = datetime.now(UTC).isoformat()
                         p.k(
                             "-n",
                             "staging",
@@ -405,6 +415,8 @@ def verify(trials=2):
                 passed(
                     "Database outage detected; liveness, saved tasks and PVC survive recovery",
                     trial=trial,
+                    startedAt=outage_at,
+                    recoveryStartedAt=recovery_at,
                     detectionSeconds=detected,
                     recoverySeconds=round(time.monotonic() - recovery_start, 3),
                     traffic=counts,
@@ -532,5 +544,10 @@ def verify(trials=2):
                     "max": max(values),
                 }
         RESULT.write_text(json.dumps(report, indent=2) + "\n")
+    except Exception as exc:
+        report["failedAt"] = datetime.now(UTC).isoformat()
+        report["failure"] = str(exc)
+        RESULT.write_text(json.dumps(report, indent=2) + "\n")
+        raise
     finally:
         recover()

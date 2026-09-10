@@ -138,7 +138,9 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
         },
         "overrides": []
       },
@@ -180,7 +182,33 @@
       },
       "options": {
         "showHeader": true
-      }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "namespace",
+                "source_sha"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "namespace": 0,
+              "source_sha": 1
+            },
+            "renameByName": {
+              "namespace": "Environment",
+              "source_sha": "Source commit"
+            }
+          }
+        }
+      ]
     },
     {
       "id": 5,
@@ -212,7 +240,22 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -248,7 +291,22 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -290,7 +348,36 @@
       },
       "options": {
         "showHeader": true
-      }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "name",
+                "health_status",
+                "sync_status"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "name": 0,
+              "health_status": 1,
+              "sync_status": 2
+            },
+            "renameByName": {
+              "name": "Environment",
+              "health_status": "Health",
+              "sync_status": "Git sync"
+            }
+          }
+        }
+      ]
     },
     {
       "id": 8,
@@ -309,7 +396,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "ALERTS{namespace=~\"$namespace\",alertstate=\"firing\"}",
+          "expr": "ALERTS{alertname=~\"PreviewForge.*\",namespace=~\"$namespace|\",alertstate=\"firing\"}",
           "instant": true,
           "range": false,
           "format": "table",
@@ -328,7 +415,39 @@
       },
       "options": {
         "showHeader": true
-      }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "namespace",
+                "alertname",
+                "severity",
+                "job"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "namespace": 0,
+              "alertname": 1,
+              "severity": 2,
+              "job": 3
+            },
+            "renameByName": {
+              "namespace": "Environment",
+              "alertname": "Alert",
+              "severity": "Severity",
+              "job": "Metric source"
+            }
+          }
+        }
+      ]
     }
   ]
 }
