@@ -1,0 +1,101 @@
+{
+  "started_at": "2026-09-10T15:18:58.580396+00:00",
+  "staging_pvc": "cfda1bb8-cce6-456e-acfc-444de8357872",
+  "assistant_stopped": true,
+  "export_completed_without_ai": true,
+  "export_id": "2ac295e4-5144-4296-8e59-5201ff84e11a",
+  "task_count": 3,
+  "startup_seconds": 19.23,
+  "staging_diagnosis": {
+    "metadata": {
+      "request_id": "8d6fbab7-c609-41f0-a002-eb0f95a4e177",
+      "timestamp": "2026-09-10T15:19:56.084677+00:00",
+      "environment": "staging",
+      "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+      "observed_image": "ghcr.io/hickodev/previewforge-demo@sha256:c99b7c32e4e656794c49af424a16caa7073b5daa361034cef4ddf20b1f80bd92",
+      "config_revision": "2202c9688f42c263c235c8cc488a6762827e4a6a",
+      "provider": "mock",
+      "model": "deterministic-fixture-v1",
+      "prompt_version": "previewforge-diagnosis-v1",
+      "evidence_sha256": "eca5c37320276f203aa3096fdae98d6ad0a27ac73d68a176e94ddae73640541d",
+      "attempts": 0,
+      "usage": {},
+      "usage_note": "Returned usage covers completed responses; timed-out/retried attempts may also consume quota.",
+      "elapsed_ms": 1.46
+    },
+    "diagnosis": {
+      "status": "healthy",
+      "environment": "staging",
+      "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+      "summary": "No incident is indicated by the collected readiness evidence.",
+      "observed_facts": [
+        {
+          "statement": "Observed deployment evidence: ready=true\nDATABASE_PORT=5432",
+          "evidence_ids": [
+            "deployment-1"
+          ],
+          "quote": "ready=true\nDATABASE_PORT=5432"
+        }
+      ],
+      "hypotheses": [],
+      "suggested_checks": [],
+      "missing_evidence": [
+        "No bounded configuration diff was registered for this deployment",
+        "event-1: stale or mismatched evidence omitted",
+        "event-2: stale or mismatched evidence omitted",
+        "event-3: stale or mismatched evidence omitted",
+        "event-4: stale or mismatched evidence omitted",
+        "log-1: unrecognized text omitted"
+      ]
+    },
+    "error": null,
+    "evidence": [
+      {
+        "id": "deployment-1",
+        "source": "deployment",
+        "timestamp": "2026-09-10T15:19:56.025156Z",
+        "environment": "staging",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": null,
+        "excerpt": "ready=true\nDATABASE_PORT=5432"
+      },
+      {
+        "id": "service-1",
+        "source": "service",
+        "timestamp": "2026-09-10T15:19:56.025156Z",
+        "environment": "staging",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": null,
+        "excerpt": "service_port=5432"
+      },
+      {
+        "id": "argocd-1",
+        "source": "argocd",
+        "timestamp": "2026-09-10T15:19:56.025156Z",
+        "environment": "staging",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": "2202c9688f42c263c235c8cc488a6762827e4a6a",
+        "excerpt": "sync=Synced; health=Healthy"
+      },
+      {
+        "id": "pod-1",
+        "source": "pod",
+        "timestamp": "2026-09-10T15:19:56.025156Z",
+        "environment": "staging",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": null,
+        "excerpt": "ready=true; restarts=0"
+      }
+    ],
+    "missing_evidence": [
+      "No bounded configuration diff was registered for this deployment",
+      "event-1: stale or mismatched evidence omitted",
+      "event-2: stale or mismatched evidence omitted",
+      "event-3: stale or mismatched evidence omitted",
+      "event-4: stale or mismatched evidence omitted",
+      "log-1: unrecognized text omitted"
+    ]
+  },
+  "completed_at": "2026-09-10T15:19:59.039804+00:00",
+  "passed": true
+}

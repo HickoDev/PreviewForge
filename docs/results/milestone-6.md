@@ -26,6 +26,7 @@ Initial diagnostic exercises exposed two gaps: the application's JSON formatter 
 | Kubernetes RBAC | Allowed pod/log reads in the authorized namespace; denied Secret reads, exec/attach, workload mutation, impersonation and unrelated namespace reads |
 | Recovery and cleanup | Explicit Git revert restored readiness. Test Application, namespace, PVC/PV, diagnostic roles and local Git server were removed. Staging's three tasks and PVC were preserved |
 | Private key setup | Tested with a synthetic value and mocked Kubernetes write; value passed only via stdin and was absent from output/arguments. A real key was neither requested nor configured |
+| Documented startup | With the assistant stopped, staging still completed an SQS/S3 export. `python scripts/assistant.py up` restored the assistant in mock mode in 19.23 seconds; Argo was Synced/Healthy, Swagger accepted a diagnosis body, and staging diagnosis/tasks/PVC were preserved |
 
 The [raw cluster result](milestone-6-cluster.json) includes source/image identity, timestamps, permissions, the actual sanitized diagnosis and evidence. The successful run used disposable **`preview-600006`** and a read-only local Git server. It did not create a new remote repository, PR or assistant registry package. It did not provision Floci resources for this API-only failure fixture.
 
@@ -36,6 +37,10 @@ Configuration commits in the local exercise were:
 - Explicit recovery revert: `cbd1591262c783e5c60d8bccd87e08295dda4480`.
 
 These configuration commits are separate from the application image's source SHA. Staging's PVC remained **`cfda1bb8-cce6-456e-acfc-444de8357872`**.
+
+The [startup and independence result](milestone-6-startup.json) records one retained-service startup observation, not a fresh-install benchmark. The normal GitHub-backed assistant Application, staging and monitoring were all Synced/Healthy at completion. The worker had zero restarts after 41 minutes of this observation. The initial startup test also caught Windows kubectl emitting concatenated JSON documents for a multi-document manifest; setup now handles that output before applying the complete Argo configuration.
+
+[Assistant CI](https://github.com/HickoDev/PreviewForge/actions/runs/34494610218) passed the offline tests, lint, formatting and runtime image build for the implementation commit. The assistant image is loaded into kind locally and is not published to a registry.
 
 ## Evaluation interpretation
 

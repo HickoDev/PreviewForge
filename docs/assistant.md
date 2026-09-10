@@ -102,4 +102,6 @@ python scripts/assistant.py verify --allow-faults
 
 It uses a read-only local Git fixture and the already published demo image in disposable `preview-600006`: healthy config → actual Git port change → failed readiness/log evidence → cited mock diagnosis → explicit Git revert → cleanup. This is a real local GitOps failure test, not a new GitHub PR or NVIDIA evaluation. It preserves staging and does not provision Floci resources for this API-only fixture. After interruption, use `python scripts/assistant.py recover` to remove only owned exercise resources.
 
+`python scripts/verify_assistant_startup.py --allow-faults` separately stops only the assistant, verifies a staging export completes without AI, and runs the ordinary startup command again. It restores the assistant in a `finally` block. Staging and monitoring remain running.
+
 Private reports, policies and recovery journals live under `%LOCALAPPDATA%\PreviewForge\runtime\previewforge-m6`, with Windows access restricted to your account and SYSTEM. Prompts/raw provider responses are not logged or saved. Reports include sanitized evidence, validation outcomes, source/config identities, provider/model, prompt version, evidence hash, request IDs, latency and returned usage. Only reviewed synthetic results are copied into [the milestone report](results/milestone-6.md).

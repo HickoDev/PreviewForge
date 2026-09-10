@@ -352,8 +352,16 @@ def up(live=False, model="meta/llama-3.3-70b-instruct", local_chart=False):
             "json",
             quiet=True,
         )
-        objects = json.loads(rendered)
-        for obj in objects["items"]:
+        # kubectl emits concatenated JSON documents for multi-document YAML,
+        # rather than consistently wrapping them in a Kubernetes List.
+        objects = []
+        decoder = json.JSONDecoder()
+        remaining = rendered.strip()
+        while remaining:
+            obj, end = decoder.raw_decode(remaining)
+            objects.extend(obj["items"] if obj.get("kind") == "List" else [obj])
+            remaining = remaining[end:].lstrip()
+        for obj in objects:
             if obj["kind"] == "Application":
                 obj["spec"]["source"]["helm"]["parameters"] = [
                     {"name": k, "value": val} for k, val in values.items()
