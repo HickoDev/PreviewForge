@@ -279,15 +279,30 @@ class ArtifactProvenance(unittest.TestCase):
             delivery.private_package(github)
         github.api.return_value = {
             "visibility": "private",
+            "name": "previewforge-demo",
+            "owner": {"login": "HickoDev"},
             "repository": {"full_name": "HickoDev/another-project"},
         }
         with self.assertRaisesRegex(ValueError, "must belong"):
             delivery.private_package(github)
-        github.api.return_value = {"visibility": "private"}
-        with self.assertRaises(delivery.PackagePending):
-            delivery.private_package(github)
         github.api.return_value = {
             "visibility": "private",
+            "name": "previewforge-demo",
+            "owner": {"login": "HickoDev"},
+            "id": 123,
+        }
+        with patch.dict("os.environ", {"PREVIEWFORGE_PACKAGE_ID": ""}):
+            with self.assertRaises(delivery.PackagePending):
+                delivery.private_package(github)
+        with patch.dict("os.environ", {"PREVIEWFORGE_PACKAGE_ID": "123"}):
+            delivery.private_package(github)
+        with patch.dict("os.environ", {"PREVIEWFORGE_PACKAGE_ID": "456"}):
+            with self.assertRaisesRegex(ValueError, "Package ID"):
+                delivery.private_package(github)
+        github.api.return_value = {
+            "visibility": "private",
+            "name": "previewforge-demo",
+            "owner": {"login": "HickoDev"},
             "repository": {"full_name": s.REPOSITORY},
         }
         delivery.private_package(github)
