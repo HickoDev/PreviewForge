@@ -203,7 +203,7 @@ def main():
         with forward(args.service, port) as process:
             suffix = "/d/previewforge" if args.service == "grafana" else "/alerts"
             print(f"http://127.0.0.1:{port}{suffix} (Ctrl+C to stop)", flush=True)
-            process.wait()
+            p.wait_forward(process)
         return
     if args.action == "check":
         check()

@@ -716,6 +716,12 @@ def forward(resource="service/demo-api", port=18000, namespace="staging"):
         log.close()
 
 
+def wait_forward(process):
+    # An infinite Popen.wait() delays Python's Ctrl+C handling on Windows.
+    while process.poll() is None:
+        time.sleep(0.25)
+
+
 def http(path, method="GET", payload=None, port=18000):
     body = None if payload is None else json.dumps(payload).encode()
     request = urllib.request.Request(
@@ -778,7 +784,7 @@ def main():
         elif args.action == "forward":
             print("API: http://127.0.0.1:18000/docs (Ctrl+C stops forwarding)", flush=True)
             with forward() as process:
-                process.wait()
+                wait_forward(process)
         elif args.action == "publish-local":
             publish_local()
             wait_staging(local_git("rev-parse", "HEAD"))
@@ -798,7 +804,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("Interrupted. Run platform.ps1 up to restore desired staging state.")
+        print("Interrupted.")
         sys.exit(130)
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
