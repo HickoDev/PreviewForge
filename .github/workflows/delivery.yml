@@ -1,0 +1,30 @@
+name: Deliver approved demo image
+on:
+  workflow_run:
+    workflows: [Demo CI]
+    types: [completed]
+# Set only after reviewing and approving GHCR publication and desired-state writes.
+permissions: {}
+jobs:
+  deliver:
+    if: >-
+      vars.PREVIEWFORGE_REMOTE_ENABLED == 'true' &&
+      github.repository == 'HickoDev/PreviewForge' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+      pull-requests: read
+      packages: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Validate provenance, publish and update desired state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: python3 scripts/github_delivery.py deliver

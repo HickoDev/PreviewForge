@@ -7,8 +7,10 @@ metadata:
   annotations:
     # WaitForFirstConsumer requires the PVC and database in the same wave.
     argocd.argoproj.io/sync-wave: "-2"
+    {{- if .Values.database.retain }}
     argocd.argoproj.io/sync-options: Prune=false,Delete=false
     helm.sh/resource-policy: keep
+    {{- end }}
 spec:
   accessModes: [ReadWriteOnce]
   storageClassName: {{ .Values.database.storageClass }}

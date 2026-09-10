@@ -1,0 +1,30 @@
+name: Platform CI
+on:
+  pull_request:
+    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', '.github/workflows/**']
+  push:
+    branches: [main]
+    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', '.github/workflows/**']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Offline lifecycle and provenance regressions
+        run: python3 -m unittest discover -s tests/platform -v
+      - name: Python lint and formatting with locked dependencies
+        run: |
+          docker build --target test --tag previewforge-checks previewforge-demo
+          docker run --rm -v "$PWD:/repo:ro" previewforge-checks ruff check --config /app/pyproject.toml --no-cache /repo/scripts /repo/tests/platform
+          docker run --rm -v "$PWD:/repo:ro" previewforge-checks ruff format --check --config /app/pyproject.toml --no-cache /repo/scripts /repo/tests/platform
+      - name: Check workflow syntax with checksum-verified Actionlint
+        run: |
+          curl --fail --location --output "$RUNNER_TEMP/actionlint.tar.gz" https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint"

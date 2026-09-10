@@ -1,0 +1,34 @@
+name: Demo CI
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths: ['previewforge-demo/**', 'compose.yaml', 'scripts/ci.py', '.github/workflows/demo-ci.yml']
+  push:
+    branches: [main]
+    paths: ['previewforge-demo/**', 'compose.yaml', 'scripts/ci.py', '.github/workflows/demo-ci.yml']
+permissions:
+  contents: read
+concurrency:
+  group: demo-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  test-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Test application against an isolated PostgreSQL
+        run: python3 scripts/ci.py test
+      - name: Build the actual source commit (no registry credentials)
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 scripts/ci.py build --source-sha "$SOURCE_SHA" --output "$RUNNER_TEMP/previewforge-image"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: demo-image-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/previewforge-image/
+          retention-days: 2
+          if-no-files-found: error

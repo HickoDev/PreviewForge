@@ -60,6 +60,16 @@ See [Kubernetes setup, ownership and demo instructions](docs/kubernetes.md) and 
 
 ## Implementation and verification checklist
 
+Milestone 3 adds local ApplicationSet previews and GitHub automation. See [preview operation and remote activation](docs/previews.md) and [local acceptance results](docs/results/milestone-3.md). The owner has approved remote activation; real GitHub/GHCR integration verification is in progress.
+
+```powershell
+python scripts/previews.py verify
+python scripts/previews.py demo --pr 42
+python scripts/previews.py forward --pr 42 --port 18042
+# After closing the forward:
+python scripts/previews.py close --pr 42
+```
+
 - [x] Milestone 1 implementation: API, migrations, container build, Compose, structured request logs and synthetic seed command.
 - [x] Milestone 1 verification: clean startup, PostgreSQL CRUD, 27 passing unit/integration tests and migration lifecycle.
 - [x] Milestone 1 verification: health/version/metrics, API replacement persistence and database recovery.
@@ -67,11 +77,14 @@ See [Kubernetes setup, ownership and demo instructions](docs/kubernetes.md) and 
 - [x] Milestone 2 implementation: kind, Helm, Argo CD and persistent staging with a private local Git fixture.
 - [x] Milestone 2 verification: exact image/source rollout from a config commit, drift repair, failure visibility and completed Git recovery.
 - [x] Milestone 2 verification: eight offline guard/fixture tests, database/PVC persistence and documented cluster stop/start.
-- [ ] Milestone 3: GitHub Actions, immutable GHCR images, ApplicationSet, PR previews and cleanup.
+- [x] Milestone 3 implementation: ApplicationSet, validated build records, per-preview databases and owned cleanup/reconciliation.
+- [x] Milestone 3 local verification: two previews, isolated data, individual updates, stale/failed-build rejection, main-source staging and complete cleanup.
+- [x] Milestone 3 preparation: read-only CI, guarded GHCR delivery, conflict-aware config writes, close/scheduled reconciliation.
+- [ ] Milestone 3 remote acceptance: approved workflow/image publication, private Git/GHCR access and two real GitHub PRs.
 - [ ] Milestone 4: Prometheus/Grafana dashboards, alerts and measured recovery.
 - [ ] Milestone 5: Terraform-managed Floci resources, local reconciler and asynchronous exports.
 - [ ] Milestone 6: evidence-backed NVIDIA-hosted NIM diagnostics, starting with mock mode.
 
 `ai-assistant/.env.example` contains design placeholders only. No AI service/provider has been implemented or called, and no NVIDIA key is needed. Live hosted inference will require separate opt-in and privately configured credentials at Milestone 6.
 
-No GitHub workflow, published image, real cloud resource or public service has been created. Floci checks prove the listed emulated API operations, not real AWS deployment or tenant security. Kubernetes namespace/storage separation is not a claim of enforced network isolation.
+GitHub/GHCR activation is authorized and being verified. The repository and application images must stay private; local services remain bound to loopback. No real cloud resources are provisioned. Floci checks prove the listed emulated API operations, not real AWS deployment or tenant security. Kubernetes namespace/storage separation is not a claim of enforced network isolation.

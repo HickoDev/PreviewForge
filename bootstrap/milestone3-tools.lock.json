@@ -1,0 +1,11 @@
+{
+  "actionlint": {
+    "version": "v1.7.12",
+    "windowsAmd64Sha256": "6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9",
+    "linuxAmd64Sha256": "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+  },
+  "actions": {
+    "checkoutV4": "11d5960a326750d5838078e36cf38b85af677262",
+    "uploadArtifactV4": "ea165f8d65b6e75b540449e92b4886f43607fa02"
+  }
+}

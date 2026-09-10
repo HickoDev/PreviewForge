@@ -5,6 +5,10 @@ image:
   digest: ""
   pullPolicy: Never
 replicas: 1
+preview:
+  enabled: false
+seed: false
+imagePullSecrets: []
 database:
   image: postgres:17.9-alpine@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
   name: previewforge
@@ -13,6 +17,7 @@ database:
   existingSecret: staging-db
   storageClass: previewforge-retain
   storageSize: 1Gi
+  retain: true
 resources:
   requests: {cpu: 100m, memory: 128Mi}
   limits: {cpu: "1", memory: 512Mi}

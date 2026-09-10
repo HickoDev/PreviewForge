@@ -23,6 +23,7 @@ spec:
         prometheus.io/port: "8000"
     spec:
       automountServiceAccountToken: false
+      imagePullSecrets: {{ .Values.imagePullSecrets | toJson }}
       securityContext:
         {{- include "demo.security" . | nindent 8 }}
       containers:

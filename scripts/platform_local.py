@@ -339,6 +339,7 @@ def is_snapshot_input(name):
         "previewforge-demo/requirements.lock",
         "previewforge-demo/alembic.ini",
         "gitops/staging/values.yaml",
+        "gitops/preview-values.yaml",
     }:
         return True
     if any(part.startswith(".") or part == "__pycache__" for part in parts):
@@ -601,6 +602,32 @@ def wait_staging(revision=None):
 def up():
     install_tools()
     ensure_cluster()
+    argo_exists = k(
+        "get", "crd", "applications.argoproj.io", "--ignore-not-found", "-o", "name", quiet=True
+    )
+    current = (
+        k(
+            "-n",
+            "argocd",
+            "get",
+            "application",
+            "staging",
+            "--ignore-not-found",
+            "-o",
+            "json",
+            quiet=True,
+        )
+        if argo_exists
+        else ""
+    )
+    if (
+        current
+        and json.loads(current)["spec"]["source"]["repoURL"]
+        != "git://previewforge-m2-git.argocd.svc.cluster.local:9418/previewforge.git"
+    ):
+        raise RuntimeError(
+            "Staging uses a remote Git source. Local bootstrap will not replace its configuration."
+        )
     ensure_password()
     if not (SOURCE / "gitops/staging/image.json").exists():
         record = load_image(snapshot())

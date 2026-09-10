@@ -1,0 +1,26 @@
+name: Reconcile preview records
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+  # Only trusted default-branch code runs. No PR checkout, artifacts or shell input.
+  pull_request_target:
+    types: [closed]
+permissions: {}
+jobs:
+  reconcile:
+    if: vars.PREVIEWFORGE_REMOTE_ENABLED == 'true' && github.repository == 'HickoDev/PreviewForge'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Remove closed, untrusted or expired preview records
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/github_delivery.py reconcile

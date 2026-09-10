@@ -1,4 +1,9 @@
 {{- define "demo.image" -}}
+{{- if .Values.preview.enabled -}}
+{{- if or (not (regexMatch "^preview-[1-9][0-9]{0,8}$" .Values.environment)) (ne .Values.environment .Release.Namespace) .Values.database.retain (ne .Values.database.storageClass "previewforge-disposable") -}}
+{{- fail "Previews require a matching preview-N namespace and disposable storage" -}}
+{{- end -}}
+{{- end -}}
 {{- $digest := required "image.digest must be an immutable sha256 digest" .Values.image.digest -}}
 {{- if not (regexMatch "^sha256:[a-f0-9]{64}$" $digest) -}}
 {{- fail "image.digest must be sha256 followed by 64 lowercase hex characters" -}}
@@ -10,6 +15,10 @@
 app.kubernetes.io/part-of: previewforge
 app.kubernetes.io/instance: {{ .Release.Name }}
 previewforge.io/environment: {{ .Values.environment | quote }}
+{{- if .Values.preview.enabled }}
+previewforge.io/owner: previewforge-m3
+previewforge.io/lifecycle: preview
+{{- end }}
 {{- end -}}
 
 {{- define "demo.environment" -}}

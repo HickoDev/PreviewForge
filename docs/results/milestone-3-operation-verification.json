@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-09-09T23:32:00.016640+00:00",
+  "forward": {
+    "status": "passed",
+    "command": "python scripts/previews.py forward --pr 42 --port 18042",
+    "sourceSha": "a78ac3a5d449995caeec425bdfc98ec22e9de6db",
+    "swagger": true,
+    "openapi": true,
+    "seededTasks": 3,
+    "previewPasswordExcludedFromRepo": true
+  },
+  "artifact": {
+    "status": "passed",
+    "sourceSha": "d96160a91866ec5d463810bf6b12ef514ac5c79a",
+    "tarBytes": 82346496,
+    "scope": "CI build/save/artifact validation/load only; no registry publication"
+  },
+  "documentedClose": "passed; namespace/application/PV removed",
+  "remoteManifests": "rendered and server dry-run passed; NOT applied"
+}
