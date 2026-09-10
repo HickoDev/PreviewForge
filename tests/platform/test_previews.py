@@ -78,6 +78,44 @@ class Store:
 
 
 class Lifecycle(unittest.TestCase):
+    def test_watcher_resumes_only_missing_namespace_failure_for_current_image(self):
+        record = update({}, build(), pr())[s.PREFIX + "preview-42.json"]
+        app = {
+            "metadata": {
+                "resourceVersion": "7",
+                "labels": {**previews.LABELS, "previewforge.io/environment": "preview-42"},
+            },
+            "spec": {
+                "source": {
+                    "helm": {
+                        "parameters": [
+                            {"name": "image.digest", "value": record["image"]["digest"]},
+                        ]
+                    }
+                }
+            },
+            "status": {
+                "operationState": {
+                    "phase": "Failed",
+                    "message": 'namespaces "preview-42" not found',
+                }
+            },
+        }
+        with (
+            patch.object(previews, "optional", return_value=app),
+            patch.object(previews.p, "patch") as mutate,
+        ):
+            previews.retry_missing_namespace(record)
+            self.assertEqual(mutate.call_args.args[2]["metadata"], {"resourceVersion": "7"})
+            mutate.reset_mock()
+            app["status"]["operationState"]["message"] = "Migration failed"
+            previews.retry_missing_namespace(record)
+            mutate.assert_not_called()
+            app["status"]["operationState"]["message"] = 'namespaces "preview-42" not found'
+            app["spec"]["source"]["helm"]["parameters"][0]["value"] = "sha256:" + "b" * 64
+            previews.retry_missing_namespace(record)
+            mutate.assert_not_called()
+
     def test_local_bootstrap_refuses_to_replace_remote_staging(self):
         with (
             patch.object(previews.p, "install_tools"),
