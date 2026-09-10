@@ -648,6 +648,20 @@ def up():
     )
 
 
+def start():
+    """Resume the retained cluster without replacing its local or remote Git source."""
+    if not owned_container(NODE, "io.x-k8s.kind.cluster"):
+        raise RuntimeError("No retained PreviewForge node; use initial setup or restore its data.")
+    install_tools()
+    ensure_cluster()
+    app = get("application", "staging", "argocd")
+    if app["spec"]["source"]["repoURL"].startswith("git://previewforge-m2-git."):
+        ensure_git_server()
+    wait_staging()
+    k("-n", "staging", "rollout", "status", "deployment/demo-api", "--timeout=180s")
+    print("Retained staging resumed. Start the remote preview watcher if GitHub mode is active.")
+
+
 @contextlib.contextmanager
 def forward(resource="service/demo-api", port=18000, namespace="staging"):
     args = [
@@ -711,7 +725,7 @@ def http(path, method="GET", payload=None, port=18000):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "action", choices=["up", "verify", "status", "forward", "stop", "publish-local"]
+        "action", choices=["up", "start", "verify", "status", "forward", "stop", "publish-local"]
     )
     args = parser.parse_args()
     if sys.platform != "win32" or sys.version_info[:2] != (3, 12):
@@ -737,6 +751,8 @@ def main():
                 raise RuntimeError("Another Milestone 2 command is running.") from exc
         if args.action == "up":
             up()
+        elif args.action == "start":
+            start()
         elif args.action == "verify":
             require_clean_fixture()
             up()

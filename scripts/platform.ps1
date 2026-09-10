@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('up', 'verify', 'status', 'forward', 'stop', 'publish-local')]
+    [ValidateSet('up', 'start', 'verify', 'status', 'forward', 'stop', 'publish-local')]
     [string]$Action = 'up'
 )
 $ErrorActionPreference = 'Stop'
