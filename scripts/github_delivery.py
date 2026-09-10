@@ -20,7 +20,7 @@ CI_PATH = ".github/workflows/demo-ci.yml"
 
 
 class PackagePending(ValueError):
-    """A newly published package has not exposed its repository association yet."""
+    """Package association is unavailable and its ID has not been approved."""
 
 
 class GitHub:
@@ -320,8 +320,22 @@ def private_package(github, allow_missing=False):
     state.require(
         package["visibility"] == "private", "Refusing publication to a non-private package"
     )
+    state.require(
+        package.get("name") == "previewforge-demo"
+        and package.get("owner", {}).get("login") == "HickoDev",
+        "Unexpected package identity",
+    )
     if not package.get("repository"):
-        raise PackagePending("Package repository association is not available yet")
+        # GITHUB_TOKEN can omit repository metadata that a classic read:packages
+        # token returns. Pin the ID only after the owner verifies its association;
+        # the pull credential stays on the laptop, never in Actions.
+        approved = os.environ.get("PREVIEWFORGE_PACKAGE_ID", "")
+        if not approved:
+            raise PackagePending("Verify the package association and configure its approved ID")
+        state.require(
+            str(package.get("id")) == approved, "Package ID differs from approved package"
+        )
+        return
     state.require(
         package.get("repository", {}).get("full_name") == state.REPOSITORY,
         "Package must belong to the PreviewForge repository",

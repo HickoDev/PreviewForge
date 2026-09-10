@@ -27,4 +27,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           BUILD_RUN_ID: ${{ github.event.workflow_run.id }}
+          PREVIEWFORGE_PACKAGE_ID: ${{ vars.PREVIEWFORGE_PACKAGE_ID }}
         run: python3 scripts/github_delivery.py deliver
