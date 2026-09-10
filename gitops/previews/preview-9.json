@@ -5,15 +5,15 @@
   "environment": "preview-9",
   "image": {
     "repository": "ghcr.io/hickodev/previewforge-demo",
-    "digest": "sha256:4ab6c5f24a76f4fdfe7715404505be9c1b249bce8cf7da0ae0e045b93ec4c14c",
+    "digest": "sha256:53e0b12e4d21cb291ddcd242f06a587073fcf21f1b256cdd2e6ee4f607257e1b",
     "pullPolicy": "IfNotPresent"
   },
-  "sourceSha": "339e5b0e9e32686f3faadfa16d84a1f13edd0e46",
+  "sourceSha": "4b46aea2c0a4f64e853ff2f8994bc60d3b393e6b",
   "createdAt": "2026-09-10T13:19:22.451893+00:00",
-  "updatedAt": "2026-09-10T13:19:22.451893+00:00",
-  "expiresAt": "2026-09-12T13:19:22.451893+00:00",
+  "updatedAt": "2026-09-10T13:31:56.229042+00:00",
+  "expiresAt": "2026-09-12T13:31:56.229042+00:00",
   "build": {
-    "runId": 34481751737,
+    "runId": 34483042521,
     "attempt": 1
   }
 }
