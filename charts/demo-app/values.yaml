@@ -9,6 +9,8 @@ preview:
   enabled: false
 seed: false
 imagePullSecrets: []
+failureExercise:
+  enabled: false
 database:
   image: postgres:17.9-alpine@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
   name: previewforge

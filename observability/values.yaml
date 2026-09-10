@@ -1,0 +1,9 @@
+# Verified against upstream releases and registry manifest digests on 2026-09-10.
+images:
+  prometheus: quay.io/prometheus/prometheus:v3.14.0@sha256:5ce7540c3c00ef4ab0c9d2c995c6a5b9c421f44b4a115d97a2c7af3b1c21cbb0
+  grafana: grafana/grafana:13.2.1@sha256:f772d434e8fab0049deb2b1b30abd43342bcfca1537614aa8d36080232cf4283
+  kubeStateMetrics: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0@sha256:42cfe3723a5f058171c627537fb57a3ea0f26e4380fa18555a95cb1a1b4cfc5b
+grafanaSecret: previewforge-grafana
+retention: 24h
+storageClass: previewforge-retain
+storageSize: 2Gi

@@ -90,4 +90,11 @@ def create_app(settings: Settings | None = None, engine=None):
     def metrics():
         return Response(generate_latest(registry), headers={"Content-Type": CONTENT_TYPE_LATEST})
 
+    @app.get("/test/failure", include_in_schema=settings.enable_failure_exercise)
+    def failure_exercise():
+        """Controlled monitoring exercise; disabled unless explicitly enabled in configuration."""
+        if not settings.enable_failure_exercise:
+            raise HTTPException(status_code=404, detail="Failure exercise disabled")
+        raise HTTPException(status_code=503, detail="Controlled PreviewForge failure exercise")
+
     return app

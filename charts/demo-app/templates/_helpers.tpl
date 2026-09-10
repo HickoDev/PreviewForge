@@ -34,6 +34,8 @@ previewforge.io/lifecycle: preview
   value: /run/secrets/db_password
 - name: ENVIRONMENT_NAME
   value: {{ .Values.environment | quote }}
+- name: ENABLE_FAILURE_EXERCISE
+  value: {{ .Values.failureExercise.enabled | toString | quote }}
 {{- end -}}
 
 {{- define "demo.security" -}}

@@ -1,0 +1,8 @@
+{{- if ne .Release.Namespace "observability" -}}
+{{- fail "Install monitoring only in namespace observability" -}}
+{{- end -}}
+{{- range .Values.images -}}
+{{- if not (regexMatch "@sha256:[a-f0-9]{64}$" .) -}}
+{{- fail "Monitoring images must be pinned to immutable digests" -}}
+{{- end -}}
+{{- end -}}

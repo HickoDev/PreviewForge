@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     database_password_file: Path = Path("/run/secrets/db_password")
     environment_name: str = "local"
     source_sha: str = "local-uncommitted"
+    enable_failure_exercise: bool = False
 
     def database_url(self) -> URL:
         password = SecretStr(self.database_password_file.read_text().strip())

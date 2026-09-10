@@ -1,10 +1,10 @@
 name: Platform CI
 on:
   pull_request:
-    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', '.github/workflows/**']
+    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', 'observability/**', '.github/workflows/**']
   push:
     branches: [main]
-    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', '.github/workflows/**']
+    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', 'observability/**', '.github/workflows/**']
 permissions:
   contents: read
 jobs:
@@ -28,3 +28,10 @@ jobs:
           echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum --check
           tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
           "$RUNNER_TEMP/actionlint"
+      - name: Validate monitoring chart, configuration and alert behavior
+        run: |
+          curl --fail --location --output "$RUNNER_TEMP/helm.tar.gz" https://get.helm.sh/helm-v4.2.4-linux-amd64.tar.gz
+          echo "c306b46f719b0a4da32d0f78ee21bf90ce8d602f15b22ab753f0674d1670a7f3  $RUNNER_TEMP/helm.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/helm.tar.gz" -C "$RUNNER_TEMP"
+          export PATH="$RUNNER_TEMP/linux-amd64:$PATH"
+          python3 scripts/monitoring.py check

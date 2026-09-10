@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: previewforge-prometheus
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ .Values.storageClass }}
+  resources:
+    requests: {storage: {{ .Values.storageSize }}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: prometheus}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: previewforge-prometheus}
+  template:
+    metadata:
+      labels: {app: previewforge-prometheus}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: previewforge-prometheus
+      securityContext: {runAsNonRoot: true, runAsUser: 65534, runAsGroup: 65534, fsGroup: 65534, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: prometheus
+          image: {{ .Values.images.prometheus }}
+          args: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus", "--storage.tsdb.retention.time={{ .Values.retention }}", "--storage.tsdb.retention.size=1GB"]
+          ports: [{name: http, containerPort: 9090}]
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: "1", memory: 768Mi}
+          readinessProbe: {httpGet: {path: /-/ready, port: http}, periodSeconds: 5}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+          volumeMounts:
+            - {name: config, mountPath: /etc/prometheus, readOnly: true}
+            - {name: data, mountPath: /prometheus}
+      volumes:
+        - {name: config, configMap: {name: previewforge-prometheus}}
+        - {name: data, persistentVolumeClaim: {claimName: previewforge-prometheus}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: grafana}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: previewforge-grafana}
+  template:
+    metadata:
+      labels: {app: previewforge-grafana}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 472, runAsGroup: 472, fsGroup: 472, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: grafana
+          image: {{ .Values.images.grafana }}
+          ports: [{name: http, containerPort: 3000}]
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom: {secretKeyRef: {name: {{ .Values.grafanaSecret }}, key: admin-password}}
+          resources:
+            requests: {cpu: 100m, memory: 192Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          readinessProbe: {httpGet: {path: /api/health, port: http}, periodSeconds: 5}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+          volumeMounts:
+            - {name: config, mountPath: /etc/grafana/grafana.ini, subPath: grafana.ini, readOnly: true}
+            - {name: config, mountPath: /etc/grafana/provisioning/datasources/previewforge.yml, subPath: datasources.yml, readOnly: true}
+            - {name: config, mountPath: /etc/grafana/provisioning/dashboards/previewforge.yml, subPath: dashboards.yml, readOnly: true}
+            - {name: config, mountPath: /etc/grafana/dashboards/previewforge.json, subPath: previewforge.json, readOnly: true}
+            - {name: data, mountPath: /var/lib/grafana}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - {name: config, configMap: {name: previewforge-grafana}}
+        - {name: data, emptyDir: {sizeLimit: 256Mi}}
+        - {name: tmp, emptyDir: {sizeLimit: 64Mi}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: kube-state-metrics}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: previewforge-workload-metrics}
+  template:
+    metadata:
+      labels: {app: previewforge-workload-metrics}
+    spec:
+      serviceAccountName: previewforge-workload-metrics
+      securityContext: {runAsNonRoot: true, runAsUser: 65534, runAsGroup: 65534, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: metrics
+          image: {{ .Values.images.kubeStateMetrics }}
+          args: ["--resources=pods,deployments,statefulsets", "--port=8080", "--telemetry-port=8081"]
+          ports: [{name: http, containerPort: 8080}, {name: telemetry, containerPort: 8081}]
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 300m, memory: 192Mi}
+          readinessProbe: {httpGet: {path: /readyz, port: telemetry}, periodSeconds: 5}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: prometheus}
+spec:
+  type: ClusterIP
+  selector: {app: previewforge-prometheus}
+  ports: [{name: http, port: 9090, targetPort: http}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: grafana}
+spec:
+  type: ClusterIP
+  selector: {app: previewforge-grafana}
+  ports: [{name: http, port: 3000, targetPort: http}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: kube-state-metrics}
+spec:
+  type: ClusterIP
+  selector: {app: previewforge-workload-metrics}
+  ports: [{name: http, port: 8080, targetPort: http}]

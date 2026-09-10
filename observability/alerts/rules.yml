@@ -1,0 +1,55 @@
+groups:
+  - name: previewforge
+    rules:
+      - alert: PreviewForgeReleaseOutOfSync
+        expr: argocd_app_info{name=~"staging|preview-[1-9][0-9]{0,8}",sync_status!="Synced"} == 1
+        for: 45s
+        labels:
+          severity: warning
+          namespace: '{{ $labels.name }}'
+        annotations:
+          summary: 'Git deployment is not synchronized for {{ $labels.name }}'
+          action: Inspect Argo sync and image-pull events; restore the known-good configuration in Git.
+      - alert: PreviewForgeImagePullFailure
+        expr: max by (namespace) (max_over_time(kube_pod_container_status_waiting_reason{namespace=~"staging|preview-[1-9][0-9]{0,8}",reason=~"ErrImagePull|ImagePullBackOff|InvalidImageName|ErrImageNeverPull"}[1m])) > 0
+        for: 20s
+        labels: {severity: critical}
+        annotations:
+          summary: 'Image pull is failing in {{ $labels.namespace }}'
+          action: Check the desired digest and registry access; revert the failed configuration in Git.
+      - alert: PreviewForgeApiUnavailable
+        expr: kube_deployment_status_replicas_available{namespace=~"staging|preview-[1-9][0-9]{0,8}",deployment="demo-api"} < 1
+        for: 20s
+        labels: {severity: critical}
+        annotations:
+          summary: 'No ready API replica in {{ $labels.namespace }}'
+          action: Inspect API readiness and the namespace-local database.
+      - alert: PreviewForgeDatabaseUnavailable
+        expr: kube_statefulset_status_replicas_ready{namespace=~"staging|preview-[1-9][0-9]{0,8}",statefulset="demo-postgres"} < 1
+        for: 20s
+        labels: {severity: critical}
+        annotations:
+          summary: 'Database unavailable in {{ $labels.namespace }}'
+          action: Restore the database workload; retain its PVC and verify readiness and saved tasks.
+      - alert: PreviewForgeHighErrorRate
+        expr: |
+          (sum by (namespace) (rate(previewforge_http_requests_total{route!~"/health/.*|/metrics",status=~"5.."}[1m]))
+          / sum by (namespace) (rate(previewforge_http_requests_total{route!~"/health/.*|/metrics"}[1m])) > 0.05)
+          and on(namespace) (sum by (namespace) (rate(previewforge_http_requests_total{route!~"/health/.*|/metrics"}[1m])) >= 1)
+        for: 20s
+        labels: {severity: warning}
+        annotations:
+          summary: 'More than 5% server errors in {{ $labels.namespace }} under traffic'
+          action: Correlate the running source, readiness and database health. Low traffic is not treated as healthy evidence.
+      - alert: PreviewForgeScrapeFailed
+        expr: up{job="previewforge-api"} == 0
+        for: 30s
+        labels: {severity: warning}
+        annotations:
+          summary: 'API metrics scrape failed in {{ $labels.namespace }}'
+      - alert: PreviewForgeTelemetryMissing
+        expr: up{job=~"argocd|kube-state-metrics"} == 0 or absent(up{job="argocd"}) or absent(up{job="kube-state-metrics"})
+        for: 30s
+        labels: {severity: warning}
+        annotations:
+          summary: Workload or deployment telemetry is unavailable
