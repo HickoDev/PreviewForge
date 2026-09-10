@@ -7,3 +7,5 @@ Run the root [startup and verification procedure](../docs/setup.md). Compose del
 The runtime image runs as UID 10001 with a read-only root filesystem in Compose. The test image adds pytest/httpx/ruff. Application dependencies and test dependencies are separately pinned with hashes.
 
 <!-- Milestone 5 export acceptance a -->
+
+<!-- Milestone 5 acceptance update -->
