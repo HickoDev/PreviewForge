@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from http.client import RemoteDisconnected
 from pathlib import Path
 from unittest.mock import patch
 
@@ -13,6 +14,35 @@ import platform_local as platform  # noqa: E402
 
 
 class BootstrapGuards(unittest.TestCase):
+    def test_resume_waits_for_http_readiness_after_kubernetes_reports_ready(self):
+        with (
+            patch.object(platform, "owned_container", return_value=True),
+            patch.object(platform, "install_tools"),
+            patch.object(platform, "ensure_cluster"),
+            patch.object(
+                platform,
+                "get",
+                return_value={
+                    "spec": {
+                        "source": {"repoURL": "ssh://git@github.com/HickoDev/PreviewForge.git"}
+                    }
+                },
+            ),
+            patch.object(platform, "wait_staging"),
+            patch.object(platform, "k"),
+            patch.object(platform, "forward"),
+            patch.object(platform.time, "sleep"),
+            patch.object(
+                platform, "http", side_effect=[RemoteDisconnected(), (503, {}), (200, {})]
+            ) as readiness,
+            patch("builtins.print"),
+        ):
+            platform.start()
+            self.assertEqual(readiness.call_count, 3)
+            self.assertTrue(
+                all(call.args[0] == "/health/ready" for call in readiness.call_args_list)
+            )
+
     def test_dirty_fixture_stops_verification_before_mutations(self):
         with (
             patch.object(Path, "exists", return_value=True),
