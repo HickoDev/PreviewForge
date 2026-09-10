@@ -237,6 +237,19 @@ class Lifecycle(unittest.TestCase):
 
 
 class ArtifactProvenance(unittest.TestCase):
+    def test_repository_metadata_uses_canonical_endpoint(self):
+        github = object.__new__(delivery.GitHub)
+        github.token = "test-token"
+        response = Mock()
+        response.__enter__ = Mock(return_value=io.StringIO('{"private": true}'))
+        response.__exit__ = Mock(return_value=False)
+        with patch.object(delivery.urllib.request, "urlopen", return_value=response) as request:
+            self.assertTrue(github.api("")["private"])
+        self.assertEqual(
+            request.call_args.args[0].full_url,
+            "https://api.github.com/repos/HickoDev/PreviewForge",
+        )
+
     def test_registry_configuration_rejects_wrong_account_or_broad_scope(self):
         for text in (
             "account someone-else (GH_TOKEN)\n  - Active account: true\n  - Token scopes: 'read:packages'",

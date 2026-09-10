@@ -35,7 +35,7 @@ class GitHub:
     def api(self, path, method="GET", body=None, global_path=False):
         request = urllib.request.Request(
             "https://api.github.com/"
-            + ("" if global_path else "repos/" + state.REPOSITORY + "/")
+            + ("" if global_path else "repos/" + state.REPOSITORY + ("/" if path else ""))
             + path,
             data=None if body is None else json.dumps(body).encode(),
             method=method,
