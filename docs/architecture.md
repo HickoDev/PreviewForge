@@ -10,24 +10,24 @@ flowchart LR
   Floci --> Storage[(Floci volume)]
 ```
 
-The task API does not use S3/SQS yet. The smoke clients establish verified emulator connectivity before task exports arrive in Milestone 5. Floci availability does not determine the task API's readiness.
+This diagram shows the original Compose baseline, which keeps exports disabled. The configured Kubernetes installation now uses S3/SQS for task exports. With exports enabled, API readiness includes the database, report bucket and queue. See [the export sequence and controller ownership](resources.md).
 
 ## Ownership
 
 | Component | Owns now | Planned later |
 | --- | --- | --- |
-| `previewforge-demo/` | API source, migrations, seed data, tests, Dockerfile | Export worker |
-| Platform repository root | Compose, kind, Helm, staging, local preview lifecycle, prepared CI/delivery, acceptance scripts and results | Remote delivery acceptance, Terraform, monitoring dashboards, AI service |
-| PostgreSQL | Separate real instances/storage for staging and each preview | Export status/worker integration |
-| Floci | Simulated S3 objects and SQS messages | Per-environment Terraform resources |
+| `previewforge-demo/` | API, export worker, migrations, seed data, tests, Dockerfile | Application extensions |
+| Platform repository root | Compose, kind, Helm, Argo, GitHub/GHCR delivery, local Terraform reconciliation, monitoring, acceptance evidence | AI service |
+| PostgreSQL | Separate storage, tasks, export jobs and durable report snapshots per environment | Application extensions |
+| Floci | Terraform-managed S3 buckets and SQS queues per environment | Additional emulated services if needed |
 
-There is one remote repository. The logical demo component remains inside this checkout for Milestone 3. No additional remote was created; a later split would require discussion. Path-filtered CI separates application builds from deployment-config changes.
+There is one remote repository. The logical demo component remains inside this checkout. No additional remote was created; a later split would require discussion. Path-filtered CI separates application builds from deployment-config changes.
 
 ## Database and health
 
 SQLAlchemy uses PostgreSQL through psycopg. Alembic creates the schema in a separate, one-shot service; the API starts after that service succeeds. The application does not silently create tables itself. This follows [Compose's dependency health/completion controls](https://docs.docker.com/compose/how-tos/startup-order/) and leaves migrations usable as a later deployment Job.
 
-Liveness answers whether the process can respond. Readiness checks both database connectivity and the task table. A database failure returns a sanitized HTTP 503 for readiness/task requests, while liveness, version and metrics remain available. Database connections and statements have bounded timeouts.
+Liveness answers whether the process can respond. Readiness checks database connectivity and the task table; when exports are enabled it also checks export storage and the queue. A dependency failure returns a sanitized HTTP 503 for affected requests, while liveness, version and metrics remain available. Database and AWS client calls have bounded timeouts.
 
 PostgreSQL stores records in a project-scoped named Docker volume. Replacing the API container or stopping the stack retains records. Integration tests use a separate `test-db` container with a disposable memory-backed database, never the interactive demo database. The seed command inserts deterministic synthetic rows without overwriting edits.
 
@@ -37,7 +37,7 @@ The startup wrapper creates random database credentials outside tracked and sync
 
 The Floci SDK factory explicitly sets dummy credentials, region, endpoint, path-style S3 addressing and bounded retries. It ignores ambient AWS profiles/configuration and proxy settings. Missing, public or unapproved endpoint URLs are rejected before creating clients. No real AWS account is needed.
 
-Floci advertises `http://floci:4566` in queue URLs. That hostname works inside Compose; host clients validate the returned origin and exact smoke queue identity, then substitute the configured loopback origin. This tests queue identity and reachability without relying on public wildcard DNS or editing the host's hosts file. Kubernetes-to-Floci endpoint routing remains for Milestone 5; kind does not start a competing emulator.
+Floci advertises `http://floci:4566` in queue URLs. Clients validate the local origin and queue identity, then substitute their configured endpoint. The local reconciler connects the existing Floci container to kind's Docker network and maintains a private Kubernetes Service/EndpointSlice from its discovered address. Pods use stable cluster DNS. This needs no public wildcard DNS, hosts-file edits or competing emulator.
 
 Floci gets no Docker socket: the S3/SQS operations used here do not require it. Named volumes are isolated to the selected Compose project. API and Floci ports bind only to `127.0.0.1`.
 
@@ -45,9 +45,9 @@ Floci gets no Docker socket: the S3/SQS operations used here do not require it. 
 
 Application requests produce JSON logs with generated request ID, HTTP method, route template, status and duration. Logs omit request bodies, raw paths, query strings, headers and database exception contents. Metrics use bounded route/method labels; task UUIDs and arbitrary request paths do not become time-series labels.
 
-`/version` and `previewforge_build_info` show the source SHA and environment. Startup uses the current checkout commit; a checkout with modifications is labeled `<sha>-dirty`. Before the first local commit, the source is labeled `local-uncommitted`. The acceptance script compares the expected identity with the running API before and after recreation/recovery. Later CI will supply the exact immutable build identity.
+`/version` and `previewforge_build_info` show the source SHA and environment. Compose startup labels local modifications as `<sha>-dirty`. GitHub CI bakes the exact source commit into each image, and deployment records select an immutable digest. Acceptance checks compare the intended identity with the running API.
 
-Only the Prometheus text endpoint exists now. No Prometheus server, Grafana dashboard or Kubernetes rollout has been tested in Milestone 1.
+Milestone 1 supplied the metrics endpoint. Milestone 4 added the tested Prometheus/Grafana installation, dashboard and controlled alert/recovery exercises; see [monitoring](observability.md).
 
 ## Milestone 2: Git drives persistent staging
 
@@ -75,7 +75,7 @@ The local Git fixture demonstrates actual Argo reconciliation without publishing
 
 Milestone 3 extends the staging chart with explicitly disposable preview storage and idempotent synthetic seeds. A Git file ApplicationSet generates an application only from a successful build record. The local reconciler owns namespaces and secrets; Argo owns application workloads and PVCs. Argo's deletion finalizer and a separate ownership/UID-checked namespace cleanup complete the preview lifecycle.
 
-The existing remote contains both logical components. CI builds only when application input paths change; a deployment-record commit does not trigger another build. Trusted default-branch delivery code validates build provenance and live PR/main state, then updates selected Git records with conflict-aware retries. Forks do not deploy. GitHub automation and GHCR publication remain disabled/unverified until separately approved. [Preview operation and activation](previews.md) documents those boundaries.
+The existing remote contains both logical components. CI builds only when application input paths change; a deployment-record commit does not trigger another build. Trusted default-branch delivery code validates build provenance and live PR/main state, then updates selected Git records with conflict-aware retries. Forks do not deploy. Private GitHub/GHCR delivery has been approved and verified; [remote operation](remote.md) documents startup and credentials.
 
 - [Floci 2.0.1 configuration](https://github.com/floci-io/floci/blob/2.0.1/docs/configuration/environment-variables.md), [S3](https://github.com/floci-io/floci/blob/2.0.1/docs/services/s3.md), [SQS](https://github.com/floci-io/floci/blob/2.0.1/docs/services/sqs.md).
 - [FastAPI container guide](https://fastapi.tiangolo.com/deployment/docker/).

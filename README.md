@@ -2,7 +2,7 @@
 
 **A test environment for every pull request.**
 
-PreviewForge is a local self-service GitOps platform being built one milestone at a time. This checkout is the platform repository, `HickoDev/PreviewForge`. Milestone 1 supplies a FastAPI task API, PostgreSQL and Floci for simulated S3/SQS. Milestone 2 adds kind, Helm and Argo CD for persistent local staging. Milestone 3 connects private GitHub/GHCR delivery to PR previews; Milestone 4 adds local monitoring and recovery exercises.
+PreviewForge is a local self-service GitOps platform being built one milestone at a time. This checkout is the platform repository, `HickoDev/PreviewForge`. Milestone 1 supplies a FastAPI task API, PostgreSQL and Floci for simulated S3/SQS. Milestone 2 adds kind, Helm and Argo CD for persistent local staging. Milestone 3 connects private GitHub/GHCR delivery to PR previews; Milestone 4 adds local monitoring and recovery exercises. Milestone 5 adds Terraform-managed resources and asynchronous task exports for every environment.
 
 The demo application lives in `previewforge-demo/` with its own dependencies, tests, migrations and Dockerfile. Keeping it here initially makes a single checkout runnable. GitHub automation uses this one repository; a second remote repository requires discussion.
 
@@ -65,7 +65,7 @@ Milestone 3 connects real GitHub PRs and private GHCR images to local Argo CD pr
 On the configured laptop, with Docker Desktop running:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 start
+python scripts/resources.py up --github
 python scripts/previews.py watch --github --apply
 ```
 
@@ -88,6 +88,14 @@ python scripts/monitoring.py forward --service grafana
 ```
 
 Use **http://127.0.0.1:13000/d/previewforge** and select staging or a running preview. In another terminal, `python scripts/monitoring.py forward --service prometheus` opens **http://127.0.0.1:19090/alerts**. Both forwards bind only to this computer. See [startup, alerts and controlled recovery exercises](docs/observability.md) and [Milestone 4 results](docs/results/milestone-4.md).
+
+## Task exports
+
+Staging and each preview have a separate Terraform-managed Floci bucket and queue. In the API documentation, run `POST /exports`, check `GET /exports/{id}`, then download the completed report from `GET /exports/{id}/download`. A worker saves a snapshot of that environment's tasks as JSON. Accepted jobs survive queue outages and worker retries through a PostgreSQL outbox.
+
+Use `python scripts/resources.py status --github` to inspect resource reconciliation, or `python scripts/resources.py plan --github --environment staging` to see the current Terraform plan. State stays outside Git and OneDrive. Closing a PR removes its workloads before cleaning up its emulated AWS resources.
+
+See [startup, report commands and recovery](docs/resources.md) and [Milestone 5 acceptance results](docs/results/milestone-5.md).
 
 ## Implementation and verification checklist
 
