@@ -1,0 +1,229 @@
+{
+  "startedAt": "2026-09-10T10:03:52.103053+00:00",
+  "scope": "Real private GitHub PRs, GitHub Actions, GHCR pulls and Argo CD on local kind",
+  "checks": [
+    {
+      "name": "Published package verified private and linked to PreviewForge",
+      "at": "2026-09-10T10:03:52.103053+00:00",
+      "packageId": 14980083,
+      "url": "https://github.com/users/HickoDev/packages/container/package/previewforge-demo"
+    },
+    {
+      "name": "Real main CI artifact published and desired staging record committed",
+      "at": "2026-09-10T10:06:10.346371+00:00",
+      "sourceSha": "8dd65547a0b8f4fb3bc98dca5548506272e99abb",
+      "image": {
+        "repository": "ghcr.io/hickodev/previewforge-demo",
+        "digest": "sha256:7fc5874d2eba9538bc9596f4e6b5bc07a94497144523c4f82abb735f394a1d55",
+        "pullPolicy": "IfNotPresent"
+      },
+      "ciRun": 34463325034,
+      "deliveryRun": 34464156649
+    },
+    {
+      "name": "Initial failed PR build creates no desired preview",
+      "at": "2026-09-10T10:06:42.111221+00:00",
+      "pr": 2,
+      "ciRun": 34464142906,
+      "cause": "Ruff formatting rejected the temporary long API title"
+    },
+    {
+      "name": "Private SSH Git read and GHCR pull deploy main to staging with original PVC/tasks",
+      "at": "2026-09-10T10:06:54.404627+00:00",
+      "sourceSha": "8dd65547a0b8f4fb3bc98dca5548506272e99abb"
+    },
+    {
+      "name": "Two real PRs deploy distinct private image digests and isolated seeded databases",
+      "at": "2026-09-10T10:09:51.953572+00:00",
+      "records": {
+        "preview-1": {
+          "schemaVersion": 1,
+          "repository": "HickoDev/PreviewForge",
+          "pr": 1,
+          "environment": "preview-1",
+          "image": {
+            "repository": "ghcr.io/hickodev/previewforge-demo",
+            "digest": "sha256:bfc51d78124ea726085a8f61a0d9771a91bfb59530fea8b8a62c42a58b363f84",
+            "pullPolicy": "IfNotPresent"
+          },
+          "sourceSha": "62df2cc9542442817e8e6f88621914184112fd44",
+          "createdAt": "2026-09-10T10:06:27.497030+00:00",
+          "updatedAt": "2026-09-10T10:06:27.497030+00:00",
+          "expiresAt": "2026-09-12T10:06:27.497030+00:00",
+          "build": {
+            "runId": 34464132553,
+            "attempt": 1
+          }
+        },
+        "preview-2": {
+          "schemaVersion": 1,
+          "repository": "HickoDev/PreviewForge",
+          "pr": 2,
+          "environment": "preview-2",
+          "image": {
+            "repository": "ghcr.io/hickodev/previewforge-demo",
+            "digest": "sha256:65018306c8db1c154c42e04946f5acd47b7f0335575844cad90bda3a6953bd7a",
+            "pullPolicy": "IfNotPresent"
+          },
+          "sourceSha": "0584ba8620bcd32e14e615e6b8c86010ccba4943",
+          "createdAt": "2026-09-10T10:08:11.171886+00:00",
+          "updatedAt": "2026-09-10T10:08:11.171886+00:00",
+          "expiresAt": "2026-09-12T10:08:11.171886+00:00",
+          "build": {
+            "runId": 34464321768,
+            "attempt": 1
+          }
+        }
+      },
+      "pvcs": {
+        "preview-1": {
+          "uid": "60de5cb0-5787-41e9-9b3d-314c36db603c",
+          "pv": "pvc-60de5cb0-5787-41e9-9b3d-314c36db603c"
+        },
+        "preview-2": {
+          "uid": "0f004b19-1794-427d-a947-93cadb09dffd",
+          "pv": "pvc-0f004b19-1794-427d-a947-93cadb09dffd"
+        }
+      }
+    },
+    {
+      "name": "Watcher recovers Argo missing-namespace failure after restart",
+      "at": "2026-09-10T10:09:52.113145+00:00",
+      "initiatedBy": {
+        "automated": true
+      }
+    },
+    {
+      "name": "Deliberately failing PR update leaves desired record, running image and data unchanged",
+      "at": "2026-09-10T10:13:01.395162+00:00",
+      "pr": 1,
+      "ciRun": 34464648303
+    },
+    {
+      "name": "Documented remote preview forward serves Swagger and correct environment on loopback",
+      "at": "2026-09-10T10:14:07.470501+00:00",
+      "command": "python scripts/previews.py forward --github --pr 1 --port 18042",
+      "version": {
+        "source_sha": "62df2cc9542442817e8e6f88621914184112fd44",
+        "environment": "preview-1"
+      }
+    },
+    {
+      "name": "Successful real PR update replaces only its image and preserves both databases",
+      "at": "2026-09-10T10:15:32.356872+00:00",
+      "pr": 1,
+      "sourceSha": "167d28958c270092f87ff28c5cbff9f866766625",
+      "image": {
+        "repository": "ghcr.io/hickodev/previewforge-demo",
+        "digest": "sha256:3345d5d3f7c71b6e4bf1b8e66670dc9974abad0800b7fca9399bd78f48733cc1",
+        "pullPolicy": "IfNotPresent"
+      },
+      "ciRun": 34464896502,
+      "deliveryRun": 34464984089
+    },
+    {
+      "name": "Documented platform stop/start retains remote Git source, registry credentials and all three databases",
+      "at": "2026-09-10T10:17:10.805503+00:00"
+    },
+    {
+      "name": "Replayed old successful GitHub build is rejected before publication and cannot roll back preview",
+      "at": "2026-09-10T10:17:17.210803+00:00",
+      "ciRun": 34464132553,
+      "attempt": 2,
+      "deliveryRun": 34465191165
+    },
+    {
+      "name": "Missed close event simulated by gated handler; closed PR record and preview remain until reconciliation",
+      "at": "2026-09-10T10:18:17.366323+00:00",
+      "pr": 2,
+      "skippedRun": 34465340983
+    },
+    {
+      "name": "Real dispatched reconciliation repairs missed close and removes Application, namespace, PVC and PV while preserving other preview/staging",
+      "at": "2026-09-10T10:19:24.103504+00:00",
+      "pr": 2,
+      "workflowRun": 34465353689
+    },
+    {
+      "name": "Reviewed two-line API documentation change merged after successful PR acceptance",
+      "at": "2026-09-10T10:19:33.301740+00:00",
+      "pr": 1,
+      "prHead": "167d28958c270092f87ff28c5cbff9f866766625",
+      "mergeCommit": "71ea32bc0c95b14d5fce24b74edad84904631a82"
+    },
+    {
+      "name": "Successful build replay after PR close is rejected and cannot recreate the preview",
+      "at": "2026-09-10T10:21:05.738654+00:00",
+      "pr": 2,
+      "ciRun": 34464321768,
+      "attempt": 2,
+      "deliveryRun": 34465545368
+    },
+    {
+      "name": "Real merge close handler and local watcher remove final preview, leaving retained staging storage only",
+      "at": "2026-09-10T10:21:05.763149+00:00",
+      "pr": 1,
+      "workflowRun": 34465457275
+    },
+    {
+      "name": "Real merged main commit deployed by private GHCR digest; HTTP identity, pod image ID and persistent staging data verified",
+      "at": "2026-09-10T10:24:03.161902+00:00",
+      "sourceSha": "71ea32bc0c95b14d5fce24b74edad84904631a82",
+      "prHead": "167d28958c270092f87ff28c5cbff9f866766625",
+      "image": {
+        "repository": "ghcr.io/hickodev/previewforge-demo",
+        "digest": "sha256:5444abc535310a37286b42a20541ad4d845e7f927f30bb5334046b5a2fde7666",
+        "pullPolicy": "IfNotPresent"
+      },
+      "configurationRevision": "22302fa165afce075ebba45944952f1ac2cd927c",
+      "ciRun": 34465457357,
+      "deliveryRun": 34465574571,
+      "stagingPvcUid": "cfda1bb8-cce6-456e-acfc-444de8357872"
+    },
+    {
+      "name": "Repeated remote reconciliation succeeds without a desired-state write; local dry-run/apply both empty",
+      "at": "2026-09-10T10:26:30.870820+00:00",
+      "workflowRun": 34465858919
+    },
+    {
+      "name": "Both controlled PRs closed and their unchanged temporary remote branches/worktrees removed",
+      "at": "2026-09-10T10:26:40.850116+00:00"
+    },
+    {
+      "name": "Documented PowerShell staging forward serves merged API documentation and main SHA on loopback",
+      "at": "2026-09-10T10:28:27.850066+00:00",
+      "version": {
+        "source_sha": "71ea32bc0c95b14d5fce24b74edad84904631a82",
+        "environment": "staging"
+      }
+    }
+  ],
+  "completedAt": "2026-09-10T10:28:28.344573+00:00",
+  "tests": {
+    "application": 27,
+    "platform": 31,
+    "ruff": "passed",
+    "actionlint": "passed"
+  },
+  "finalStaging": {
+    "image": {
+      "repository": "ghcr.io/hickodev/previewforge-demo",
+      "digest": "sha256:5444abc535310a37286b42a20541ad4d845e7f927f30bb5334046b5a2fde7666",
+      "pullPolicy": "IfNotPresent"
+    },
+    "sourceSha": "71ea32bc0c95b14d5fce24b74edad84904631a82"
+  },
+  "limitations": [
+    "48-hour expiry not waited out on GitHub",
+    "No forced live Git ref race",
+    "No fresh-laptop or deleted-node recovery",
+    "No enforced cross-namespace network isolation",
+    "GitHub scheduler timing not measured"
+  ],
+  "finalOperationState": {
+    "cluster": "running",
+    "staging": "Synced/Healthy",
+    "activePreviews": 0,
+    "temporaryWatchersAndForwards": "stopped; run documented foreground commands"
+  }
+}
