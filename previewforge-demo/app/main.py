@@ -76,13 +76,13 @@ def create_app(settings: Settings | None = None, engine=None):
     def live():
         return {"status": "alive"}
 
-    @app.get("/health/ready")
+    @app.get("/health/ready", summary="Check API and database readiness")
     def ready(session: Database):
         session.execute(text("SELECT 1"))
         session.execute(select(Task.id).limit(1))
         return {"status": "ready", "database": "connected"}
 
-    @app.get("/version")
+    @app.get("/version", summary="Show deployed source and environment")
     def version():
         return {"source_sha": settings.source_sha, "environment": settings.environment_name}
 
