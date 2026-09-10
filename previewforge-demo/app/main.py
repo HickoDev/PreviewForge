@@ -34,7 +34,7 @@ def create_app(settings: Settings | None = None, engine=None):
         yield
         db_engine.dispose()
 
-    app = FastAPI(title="PreviewForge Task API", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="PreviewForge Task API - isolated preview B", version="0.1.0", lifespan=lifespan)
     app.state.engine = db_engine
     registry = make_registry(settings)
     app.add_middleware(TelemetryMiddleware, registry=registry)
