@@ -283,6 +283,9 @@ class ArtifactProvenance(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "must belong"):
             delivery.private_package(github)
+        github.api.return_value = {"visibility": "private"}
+        with self.assertRaises(delivery.PackagePending):
+            delivery.private_package(github)
         github.api.return_value = {
             "visibility": "private",
             "repository": {"full_name": s.REPOSITORY},
