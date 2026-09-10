@@ -73,6 +73,8 @@ The local Git fixture demonstrates actual Argo reconciliation without publishing
 
 ## Dependency sources and update procedure
 
+Milestone 6 adds an independent trusted assistant in `previewforge-ai`. Argo CD owns its Helm-rendered ServiceAccount, Deployment and ClusterIP Service. The local setup command owns its explicit environment policy, namespace-scoped read Roles/Bindings and private credential provisioning. The assistant uses the projected read-only service identity, not the bootstrap's administrator kubeconfig. A request verifies the registered source/image, collects selected evidence, filters it, then uses mock inference or explicitly enabled NVIDIA HTTPS inference. It validates citations and structured output without executing any result. See [diagnostics, privacy and live setup](assistant.md).
+
 Milestone 3 extends the staging chart with explicitly disposable preview storage and idempotent synthetic seeds. A Git file ApplicationSet generates an application only from a successful build record. The local reconciler owns namespaces and secrets; Argo owns application workloads and PVCs. Argo's deletion finalizer and a separate ownership/UID-checked namespace cleanup complete the preview lifecycle.
 
 The existing remote contains both logical components. CI builds only when application input paths change; a deployment-record commit does not trigger another build. Trusted default-branch delivery code validates build provenance and live PR/main state, then updates selected Git records with conflict-aware retries. Forks do not deploy. Private GitHub/GHCR delivery has been approved and verified; [remote operation](remote.md) documents startup and credentials.

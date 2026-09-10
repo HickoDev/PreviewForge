@@ -676,7 +676,7 @@ def start():
 
 
 @contextlib.contextmanager
-def forward(resource="service/demo-api", port=18000, namespace="staging"):
+def forward(resource="service/demo-api", port=18000, namespace="staging", target_port=8000):
     args = [
         str(TOOLS / "kubectl.exe"),
         "--kubeconfig",
@@ -689,7 +689,7 @@ def forward(resource="service/demo-api", port=18000, namespace="staging"):
         "--address",
         "127.0.0.1",
         resource,
-        f"{port}:8000",
+        f"{port}:{target_port}",
     ]
     log = (RUNTIME / f"port-forward-{port}.log").open("w")
     process = subprocess.Popen(

@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+**/__pycache__
+.venv
+.pytest_cache
+.ruff_cache
+*.key
+*.pem
+diagnostics
+runtime
+secrets
+**/*kubeconfig*

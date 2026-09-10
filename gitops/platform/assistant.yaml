@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: previewforge-assistant
+  namespace: argocd
+  labels: {previewforge.io/owner: previewforge-m6}
+spec:
+  sourceRepos: [ssh://git@github.com/HickoDev/PreviewForge.git]
+  destinations:
+    - {namespace: previewforge-ai, server: https://kubernetes.default.svc}
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - {group: "", kind: Service}
+    - {group: "", kind: ServiceAccount}
+    - {group: apps, kind: Deployment}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: previewforge-assistant
+  namespace: argocd
+  labels: {previewforge.io/owner: previewforge-m6}
+spec:
+  project: previewforge-assistant
+  source:
+    repoURL: ssh://git@github.com/HickoDev/PreviewForge.git
+    targetRevision: main
+    path: charts/ai-assistant
+    helm: {releaseName: assistant}
+  destination: {server: https://kubernetes.default.svc, namespace: previewforge-ai}
+  syncPolicy:
+    automated: {enabled: true, prune: true, selfHeal: true, allowEmpty: false}
+    retry:
+      limit: 3
+      backoff: {duration: 5s, factor: 2, maxDuration: 30s}

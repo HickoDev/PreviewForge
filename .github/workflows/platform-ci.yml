@@ -45,3 +45,5 @@ jobs:
           tar -xzf "$RUNNER_TEMP/helm.tar.gz" -C "$RUNNER_TEMP"
           export PATH="$RUNNER_TEMP/linux-amd64:$PATH"
           python3 scripts/monitoring.py check
+          helm lint charts/ai-assistant --namespace previewforge-ai --set image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          helm template assistant charts/ai-assistant --namespace previewforge-ai --set image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa >/dev/null

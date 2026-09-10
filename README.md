@@ -97,6 +97,19 @@ Use `python scripts/resources.py status --github` to inspect resource reconcilia
 
 See [startup, report commands and recovery](docs/resources.md) and [Milestone 5 acceptance results](docs/results/milestone-5.md).
 
+## Deployment diagnostics
+
+Milestone 6 adds a separate, read-only diagnostic API. It collects bounded evidence from approved environments, correlates the deployed image and configuration, and returns cited facts, hypotheses or an explicit abstention. Mock mode works without a key:
+
+```powershell
+python scripts/assistant.py up
+python scripts/assistant.py diagnose --fixture wrong-port
+python scripts/assistant.py diagnose --environment staging
+python scripts/assistant.py forward
+```
+
+The final command opens **http://127.0.0.1:18080/docs**. See [startup and private NVIDIA key setup](docs/assistant.md) and [Milestone 6 results](docs/results/milestone-6.md). Hosted NVIDIA inference remains opt-in and unverified until the user configures their key and runs the explicit live smoke/evaluation commands.
+
 ## Implementation and verification checklist
 
 - [x] Milestone 1 implementation: API, migrations, container build, Compose, structured request logs and synthetic seed command.
@@ -114,8 +127,10 @@ See [startup, report commands and recovery](docs/resources.md) and [Milestone 5 
 - [x] Milestone 4 verification: two live fault/recovery/preview-cleanup trials, retained metric history and data across restart, and working terminal startup/stop commands.
 - [x] Milestone 5: Terraform-managed Floci resources, local reconciler and asynchronous exports.
 - [x] Milestone 5 verification: real PR exports/update/cleanup, process-crash redelivery, resource reset, interrupted reconciliation, state recovery and documented startup.
-- [ ] Milestone 6: evidence-backed NVIDIA-hosted NIM diagnostics, starting with mock mode.
+- [x] Milestone 6 implementation: separate diagnostic API, scoped collectors, filtered evidence, citation/schema validation, mock provider and bounded NVIDIA HTTP adapter.
+- [x] Milestone 6 mock verification: offline tests, labeled evaluation, actual GitOps wrong-port diagnosis, read-only RBAC, Git recovery and owned cleanup.
+- [ ] Milestone 6 live acceptance: user-configured NVIDIA key, accessible model smoke test and human-reviewed live evaluation.
 
-`ai-assistant/.env.example` contains design placeholders only. No AI service/provider has been implemented or called, and no NVIDIA key is needed. Live hosted inference will require separate opt-in and privately configured credentials at Milestone 6.
+Mock inference makes no hosted calls. NVIDIA credentials belong only to the trusted assistant namespace; use the hidden local setup prompt after reviewing Milestone 6. The model cannot execute commands or change deployments.
 
 GitHub/GHCR delivery is enabled with the owner's approval. The repository and application images must stay private; local services remain bound to loopback. No real cloud resources are provisioned. Floci checks prove the listed emulated API operations, not real AWS deployment or tenant security. Kubernetes namespace/storage separation is not a claim of enforced network isolation.

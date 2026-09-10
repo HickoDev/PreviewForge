@@ -1,0 +1,264 @@
+{
+  "started_at": "2026-09-10T15:10:15.823568+00:00",
+  "provider": "mock",
+  "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+  "image": "ghcr.io/hickodev/previewforge-demo@sha256:c99b7c32e4e656794c49af424a16caa7073b5daa361034cef4ddf20b1f80bd92",
+  "staging_pvc": "cfda1bb8-cce6-456e-acfc-444de8357872",
+  "checks": [
+    {
+      "name": "known-good isolated GitOps deployment",
+      "at": "2026-09-10T15:10:36.891054+00:00",
+      "config_revision": "db673353e9de0d5a38d3c3cd15b971517c162aea"
+    },
+    {
+      "name": "real wrong-port failure diagnosed from scoped runtime evidence",
+      "at": "2026-09-10T15:11:51.844052+00:00",
+      "failing_config_revision": "3be07d352f0ed35b51e8f6b52f28ae29eb9444a2"
+    },
+    {
+      "name": "read-only namespace RBAC",
+      "at": "2026-09-10T15:11:53.354046+00:00",
+      "permissions": [
+        {
+          "verb": "get",
+          "resource": "pods",
+          "namespace": "preview-600006",
+          "allowed": true
+        },
+        {
+          "verb": "get",
+          "resource": "pods/log",
+          "namespace": "preview-600006",
+          "allowed": true
+        },
+        {
+          "verb": "get",
+          "resource": "secrets",
+          "namespace": "preview-600006",
+          "allowed": false
+        },
+        {
+          "verb": "list",
+          "resource": "secrets",
+          "namespace": "previewforge-ai",
+          "allowed": false
+        },
+        {
+          "verb": "create",
+          "resource": "pods/exec",
+          "namespace": "preview-600006",
+          "allowed": false
+        },
+        {
+          "verb": "create",
+          "resource": "pods/attach",
+          "namespace": "preview-600006",
+          "allowed": false
+        },
+        {
+          "verb": "patch",
+          "resource": "deployments",
+          "namespace": "preview-600006",
+          "allowed": false
+        },
+        {
+          "verb": "delete",
+          "resource": "pods",
+          "namespace": "preview-600006",
+          "allowed": false
+        },
+        {
+          "verb": "get",
+          "resource": "pods",
+          "namespace": "default",
+          "allowed": false
+        },
+        {
+          "verb": "impersonate",
+          "resource": "users",
+          "namespace": "preview-600006",
+          "allowed": false
+        }
+      ]
+    },
+    {
+      "name": "explicit Git revert restored the preview",
+      "at": "2026-09-10T15:12:09.537196+00:00",
+      "recovered_config_revision": "cbd1591262c783e5c60d8bccd87e08295dda4480"
+    },
+    {
+      "name": "disposable Application, namespace, PVC/PV, roles and Git server removed; staging tasks preserved",
+      "at": "2026-09-10T15:12:29.639102+00:00",
+      "task_count": 3
+    }
+  ],
+  "wrong_port_diagnosis": {
+    "metadata": {
+      "request_id": "e2502d7e-1274-4efa-b1a2-09a7488960b3",
+      "timestamp": "2026-09-10T15:11:51.831386+00:00",
+      "environment": "preview-600006",
+      "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+      "observed_image": "ghcr.io/hickodev/previewforge-demo@sha256:c99b7c32e4e656794c49af424a16caa7073b5daa361034cef4ddf20b1f80bd92",
+      "config_revision": "3be07d352f0ed35b51e8f6b52f28ae29eb9444a2",
+      "provider": "mock",
+      "model": "deterministic-fixture-v1",
+      "prompt_version": "previewforge-diagnosis-v1",
+      "evidence_sha256": "ecaec0d56daad5d0a98c520b61fb5967ece07f71e35f7bc21105a6571ed9eed5",
+      "attempts": 0,
+      "usage": {},
+      "usage_note": "Returned usage covers completed responses; timed-out/retried attempts may also consume quota.",
+      "elapsed_ms": 1.33
+    },
+    "diagnosis": {
+      "status": "diagnosed",
+      "environment": "preview-600006",
+      "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+      "summary": "Evidence suggests: Database port mismatch.",
+      "observed_facts": [
+        {
+          "statement": "Observed deployment evidence: ready=false\nDATABASE_PORT=5433",
+          "evidence_ids": [
+            "deployment-1"
+          ],
+          "quote": "ready=false\nDATABASE_PORT=5433"
+        },
+        {
+          "statement": "Observed service evidence: service_port=5432",
+          "evidence_ids": [
+            "service-1"
+          ],
+          "quote": "service_port=5432"
+        },
+        {
+          "statement": "Observed log evidence: database_unavailable\ndatabase operational error\ndatabase_port=5433",
+          "evidence_ids": [
+            "log-2"
+          ],
+          "quote": "database_unavailable\ndatabase operational error\ndatabase_port=5433"
+        },
+        {
+          "statement": "Observed diff evidence: - DATABASE_PORT=5432\n+ DATABASE_PORT=5433",
+          "evidence_ids": [
+            "diff-1"
+          ],
+          "quote": "- DATABASE_PORT=5432\n+ DATABASE_PORT=5433"
+        }
+      ],
+      "hypotheses": [
+        {
+          "cause": "Database port mismatch",
+          "evidence_ids": [
+            "deployment-1",
+            "service-1",
+            "log-2",
+            "diff-1"
+          ],
+          "limitations": [
+            "This is a hypothesis; confirm the intended configuration and current runtime state."
+          ]
+        }
+      ],
+      "suggested_checks": [
+        "Compare the intended database port with the PostgreSQL Service port."
+      ],
+      "missing_evidence": [
+        "event-1: unrecognized text omitted",
+        "event-2: unrecognized text omitted",
+        "event-3: unrecognized text omitted",
+        "event-4: unrecognized text omitted",
+        "log-1: unrecognized text omitted",
+        "event-5: unrecognized text omitted",
+        "event-6: unrecognized text omitted",
+        "event-7: unrecognized text omitted",
+        "event-8: unrecognized text omitted"
+      ]
+    },
+    "error": null,
+    "evidence": [
+      {
+        "id": "deployment-1",
+        "source": "deployment",
+        "timestamp": "2026-09-10T15:11:51.768517Z",
+        "environment": "preview-600006",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": null,
+        "excerpt": "ready=false\nDATABASE_PORT=5433"
+      },
+      {
+        "id": "service-1",
+        "source": "service",
+        "timestamp": "2026-09-10T15:11:51.768517Z",
+        "environment": "preview-600006",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": null,
+        "excerpt": "service_port=5432"
+      },
+      {
+        "id": "argocd-1",
+        "source": "argocd",
+        "timestamp": "2026-09-10T15:11:51.768517Z",
+        "environment": "preview-600006",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": "3be07d352f0ed35b51e8f6b52f28ae29eb9444a2",
+        "excerpt": "sync=Synced; health=Progressing"
+      },
+      {
+        "id": "diff-1",
+        "source": "diff",
+        "timestamp": "2026-09-10T15:11:51.768517Z",
+        "environment": "preview-600006",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": "3be07d352f0ed35b51e8f6b52f28ae29eb9444a2",
+        "excerpt": "- DATABASE_PORT=5432\n+ DATABASE_PORT=5433"
+      },
+      {
+        "id": "pod-1",
+        "source": "pod",
+        "timestamp": "2026-09-10T15:11:51.768517Z",
+        "environment": "preview-600006",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": null,
+        "excerpt": "ready=true; restarts=0"
+      },
+      {
+        "id": "pod-2",
+        "source": "pod",
+        "timestamp": "2026-09-10T15:11:51.768517Z",
+        "environment": "preview-600006",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": null,
+        "excerpt": "ready=false; restarts=0"
+      },
+      {
+        "id": "event-9",
+        "source": "event",
+        "timestamp": "2026-09-10T15:11:49Z",
+        "environment": "preview-600006",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": null,
+        "excerpt": "readiness probe failed"
+      },
+      {
+        "id": "log-2",
+        "source": "log",
+        "timestamp": "2026-09-10T15:11:51.768517Z",
+        "environment": "preview-600006",
+        "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+        "revision": null,
+        "excerpt": "database_unavailable\ndatabase operational error\ndatabase_port=5433"
+      }
+    ],
+    "missing_evidence": [
+      "event-1: unrecognized text omitted",
+      "event-2: unrecognized text omitted",
+      "event-3: unrecognized text omitted",
+      "event-4: unrecognized text omitted",
+      "log-1: unrecognized text omitted",
+      "event-5: unrecognized text omitted",
+      "event-6: unrecognized text omitted",
+      "event-7: unrecognized text omitted",
+      "event-8: unrecognized text omitted"
+    ]
+  },
+  "completed": true
+}

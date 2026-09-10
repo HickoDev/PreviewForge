@@ -1,0 +1,91 @@
+{{- if ne .Release.Namespace "previewforge-ai" }}
+{{- fail "The trusted assistant must run in previewforge-ai" }}
+{{- end }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: previewforge-assistant
+  labels: {previewforge.io/owner: previewforge-m6}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: previewforge-assistant
+  labels: {previewforge.io/owner: previewforge-m6}
+spec:
+  type: ClusterIP
+  selector: {app: previewforge-assistant}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: previewforge-assistant
+  labels: {previewforge.io/owner: previewforge-m6}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: previewforge-assistant}
+  template:
+    metadata:
+      labels: {app: previewforge-assistant, previewforge.io/owner: previewforge-m6}
+      annotations:
+        previewforge.io/policy-revision: {{ .Values.policyRevision | quote }}
+    spec:
+      serviceAccountName: previewforge-assistant
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: assistant
+          {{- if or (ne .Values.image.repository "docker.io/previewforge/assistant") (not (regexMatch "^sha256:[a-f0-9]{64}$" .Values.image.digest)) }}
+          {{- fail "Use the trusted locally loaded assistant repository and manifest digest" }}
+          {{- end }}
+          image: {{ printf "%s@%s" .Values.image.repository .Values.image.digest | quote }}
+          imagePullPolicy: Never
+          ports: [{name: http, containerPort: 8080}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          env:
+            - {name: AI_COLLECTOR, value: kubernetes}
+            - {name: AI_MODE, value: {{ .Values.mode | quote }}}
+            - {name: AI_LIVE_REQUESTS_ENABLED, value: {{ .Values.liveEnabled | toString | quote }}}
+            - {name: NVIDIA_MODEL, value: {{ .Values.model | quote }}}
+            {{- if .Values.liveEnabled }}
+            {{- if ne .Values.mode "nvidia" }}
+            {{- fail "Hosted calls require NVIDIA mode" }}
+            {{- end }}
+            - name: NVIDIA_API_KEY
+              valueFrom:
+                secretKeyRef: {name: previewforge-nvidia, key: api-key}
+            - name: AI_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef: {name: previewforge-ai-access, key: token}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          startupProbe:
+            httpGet: {path: /health/live, port: http}
+            periodSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: {path: /health/ready, port: http}
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: {path: /health/live, port: http}
+            periodSeconds: 15
+          volumeMounts:
+            - {name: policy, mountPath: /etc/previewforge, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: policy
+          configMap: {name: previewforge-ai-policy}
+        - name: tmp
+          emptyDir: {sizeLimit: 16Mi}

@@ -1,0 +1,26 @@
+name: Assistant CI
+on:
+  pull_request:
+    paths: ['ai-assistant/**', '.github/workflows/assistant-ci.yml']
+  push:
+    branches: [main]
+    paths: ['ai-assistant/**', '.github/workflows/assistant-ci.yml']
+permissions:
+  contents: read
+jobs:
+  offline-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Build the isolated assistant test image
+        run: docker build --target test --tag previewforge-ai-tests ai-assistant
+      - name: Lint and test with no container network or credentials
+        run: |
+          docker run --rm --network none previewforge-ai-tests ruff check --no-cache .
+          docker run --rm --network none previewforge-ai-tests ruff format --check --no-cache .
+          docker run --rm --network none previewforge-ai-tests
+      - name: Build the trusted runtime without publishing it
+        run: docker build --target runtime --build-arg SOURCE_SHA="$GITHUB_SHA" --tag previewforge-assistant-local ai-assistant
