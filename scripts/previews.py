@@ -308,6 +308,7 @@ def reconcile(apply=False):
         copy_registry_secret("staging")
     for record in records.values():
         ensure_namespace(record)
+        retry_missing_namespace(record)
     for target in removed:
         name = target["name"]
         # The generator/finalizer deletes the Application and chart resources first.
@@ -317,6 +318,38 @@ def reconcile(apply=False):
             420,
         )
         delete_namespace(target)
+
+
+def retry_missing_namespace(record):
+    # Argo may exhaust retries while the laptop watcher is stopped. Once the
+    # namespace and credentials exist, retry that specific prerequisite failure.
+    name = record["environment"]
+    app = optional("application", name)
+    if not app:
+        return
+    owned(app, name)
+    operation = app.get("status", {}).get("operationState", {})
+    if (
+        app.get("operation")
+        or operation.get("phase") not in {"Failed", "Error"}
+        or f'namespaces "{name}" not found' not in operation.get("message", "")
+    ):
+        return
+    params = {item["name"]: item["value"] for item in app["spec"]["source"]["helm"]["parameters"]}
+    if params.get("image.digest") != record["image"]["digest"]:
+        return
+    p.patch(
+        "application",
+        name,
+        {
+            "metadata": {"resourceVersion": app["metadata"]["resourceVersion"]},
+            "operation": {
+                "initiatedBy": {"username": "previewforge-local-reconciler"},
+                "sync": {"revision": "main", "prune": True},
+            },
+        },
+        "argocd",
+    )
 
 
 def up():
