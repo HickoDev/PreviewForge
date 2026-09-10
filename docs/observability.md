@@ -45,7 +45,7 @@ If the process is forcibly interrupted, restore from its non-secret journal:
 python scripts/monitoring.py recover --allow-faults --allow-github-writes
 ```
 
-The journal and raw results are under `%LOCALAPPDATA%\PreviewForge\runtime\previewforge-m2\`. Recovery refuses to overwrite an unexpected newer staging image or delete an unmarked preview. Inspect such a conflict before retrying. Do not run Git/DB fault exercises concurrently with an application release.
+The journal and raw results are under `%LOCALAPPDATA%\PreviewForge\runtime\previewforge-m2\`. Recovery refuses to overwrite an unexpected newer staging image or delete an unmarked preview. Inspect such a conflict before retrying. Do not run Git/DB fault exercises concurrently with an application release. An ordinary run takes roughly 15 minutes on the tested laptop, including alert evaluation and cleanup waits; it is not a load benchmark.
 
 ## Data and permission boundaries
 
@@ -57,4 +57,4 @@ Prometheus uses a separate 2 GiB PVC with Retain policy, 24-hour time retention 
 
 Sources checked during implementation: [Prometheus Kubernetes discovery/configuration](https://prometheus.io/docs/prometheus/latest/configuration/configuration/), [alert rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/), [Grafana provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/), [anonymous Viewer access](https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/anonymous-auth/), [workload metrics](https://github.com/kubernetes/kube-state-metrics), and [Argo CD metrics](https://argo-cd.readthedocs.io/en/stable/operator-manual/metrics/).
 
-Live verification is in progress; the results report will distinguish completed checks from limitations.
+See the [completed verification report](results/milestone-4.md), including two measured trials, startup and storage checks, fixes found during verification, and the scope of what remains untested.

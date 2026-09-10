@@ -87,7 +87,7 @@ python scripts/monitoring.py up
 python scripts/monitoring.py forward --service grafana
 ```
 
-Use **http://127.0.0.1:13000/d/previewforge** and select staging or a running preview. In another terminal, `python scripts/monitoring.py forward --service prometheus` opens **http://127.0.0.1:19090/alerts**. Both forwards bind only to this computer. See [startup, alerts and controlled recovery exercises](docs/observability.md).
+Use **http://127.0.0.1:13000/d/previewforge** and select staging or a running preview. In another terminal, `python scripts/monitoring.py forward --service prometheus` opens **http://127.0.0.1:19090/alerts**. Both forwards bind only to this computer. See [startup, alerts and controlled recovery exercises](docs/observability.md) and [Milestone 4 results](docs/results/milestone-4.md).
 
 ## Implementation and verification checklist
 
@@ -102,7 +102,8 @@ Use **http://127.0.0.1:13000/d/previewforge** and select staging or a running pr
 - [x] Milestone 3 local verification: two previews, isolated data, individual updates, stale/failed-build rejection, main-source staging and complete cleanup.
 - [x] Milestone 3 automation: read-only CI, guarded GHCR delivery, conflict-aware config writes, close/scheduled reconciliation.
 - [x] Milestone 3 remote acceptance: two real PRs, private Git/GHCR delivery, failed/stale/closed-build rejection, missed-event cleanup and merge-to-staging delivery.
-- [ ] Milestone 4: Prometheus/Grafana dashboards, alerts and measured recovery.
+- [x] Milestone 4 implementation: Prometheus/Grafana, automatic workload discovery, eight dashboard panels and seven alert rules.
+- [x] Milestone 4 verification: two live fault/recovery/preview-cleanup trials, retained metric history and data across restart, and working terminal startup/stop commands.
 - [ ] Milestone 5: Terraform-managed Floci resources, local reconciler and asynchronous exports.
 - [ ] Milestone 6: evidence-backed NVIDIA-hosted NIM diagnostics, starting with mock mode.
 

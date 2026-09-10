@@ -1,0 +1,162 @@
+{
+  "startedAt": "2026-09-10T11:18:00.797481+00:00",
+  "trials": 2,
+  "checks": [
+    {
+      "name": "Provisioned Grafana dashboard and all seven non-alert panels query live Prometheus data",
+      "at": "2026-09-10T11:18:09.235554+00:00"
+    },
+    {
+      "name": "Failed release detected and recovered through Git",
+      "at": "2026-09-10T11:21:44.813947+00:00",
+      "trial": 1,
+      "committedAt": "2026-09-10T11:18:09.240145+00:00",
+      "recoveryStartedAt": "2026-09-10T11:19:28.314111+00:00",
+      "badCommit": "dde2178185e0f1f81bc5b00414961072661b3c30",
+      "recoveryCommit": "88ace84da500e901e682f89588aa310ac8b789a5",
+      "detectionSeconds": 61.235,
+      "recoverySeconds": 136.5
+    },
+    {
+      "name": "Database outage detected; liveness, saved tasks and PVC survive recovery",
+      "at": "2026-09-10T11:23:40.955598+00:00",
+      "trial": 1,
+      "startedAt": "2026-09-10T11:21:45.654969+00:00",
+      "recoveryStartedAt": "2026-09-10T11:22:39.968945+00:00",
+      "detectionSeconds": 54.313,
+      "recoverySeconds": 60.984,
+      "traffic": {
+        "requests": 660,
+        "statusCounts": {
+          "200": 535,
+          "503": 125
+        },
+        "workers": 6
+      }
+    },
+    {
+      "name": "Explicit local preview fixture discovered, isolated alert fires, complete cleanup removes live metrics",
+      "at": "2026-09-10T11:25:45.826630+00:00",
+      "trial": 1,
+      "namespace": "preview-884047277",
+      "cleanupSeconds": 55.828,
+      "traffic": {
+        "requests": 171,
+        "statusCounts": {
+          "503": 171
+        },
+        "workers": 1
+      },
+      "fixtureMode": "Existing private main image; manually created Argo Application, no GitHub PR"
+    },
+    {
+      "name": "Failed release detected and recovered through Git",
+      "at": "2026-09-10T11:29:13.746810+00:00",
+      "trial": 2,
+      "committedAt": "2026-09-10T11:25:45.844402+00:00",
+      "recoveryStartedAt": "2026-09-10T11:27:01.488388+00:00",
+      "badCommit": "5956ac7d0292116f926ca8457fd344265d3d2747",
+      "recoveryCommit": "19728e754ac0052af7dba1c8794796382091fb04",
+      "detectionSeconds": 58.218,
+      "recoverySeconds": 132.25
+    },
+    {
+      "name": "Database outage detected; liveness, saved tasks and PVC survive recovery",
+      "at": "2026-09-10T11:31:14.627471+00:00",
+      "trial": 2,
+      "startedAt": "2026-09-10T11:29:14.502207+00:00",
+      "recoveryStartedAt": "2026-09-10T11:30:13.294332+00:00",
+      "detectionSeconds": 58.797,
+      "recoverySeconds": 61.328,
+      "traffic": {
+        "requests": 762,
+        "statusCounts": {
+          "200": 628,
+          "503": 134
+        },
+        "workers": 6
+      }
+    },
+    {
+      "name": "Explicit local preview fixture discovered, isolated alert fires, complete cleanup removes live metrics",
+      "at": "2026-09-10T11:33:16.010557+00:00",
+      "trial": 2,
+      "namespace": "preview-821432045",
+      "cleanupSeconds": 52.578,
+      "traffic": {
+        "requests": 153,
+        "statusCounts": {
+          "503": 153
+        },
+        "workers": 1
+      },
+      "fixtureMode": "Existing private main image; manually created Argo Application, no GitHub PR"
+    },
+    {
+      "name": "No active firing PreviewForge alerts after all recoveries",
+      "at": "2026-09-10T11:33:16.095673+00:00"
+    }
+  ],
+  "baseline": {
+    "image": {
+      "repository": "ghcr.io/hickodev/previewforge-demo",
+      "digest": "sha256:19fd6a7d2de28984d0aac1a97b27482e026f5f5c8d3daee1a2e6ebfbffb4cefa",
+      "pullPolicy": "IfNotPresent"
+    },
+    "sourceSha": "cdd6de85bc5916123a8007ef59f52b55a9c4afc4"
+  },
+  "stagingPvcUid": "cfda1bb8-cce6-456e-acfc-444de8357872",
+  "completedAt": "2026-09-10T11:33:16.111285+00:00",
+  "measurements": {
+    "Database outage detected; liveness, saved tasks and PVC survive recovery:detectionSeconds": {
+      "n": 2,
+      "raw": [
+        54.313,
+        58.797
+      ],
+      "median": 56.555,
+      "min": 54.313,
+      "max": 58.797
+    },
+    "Failed release detected and recovered through Git:detectionSeconds": {
+      "n": 2,
+      "raw": [
+        61.235,
+        58.218
+      ],
+      "median": 59.7265,
+      "min": 58.218,
+      "max": 61.235
+    },
+    "Database outage detected; liveness, saved tasks and PVC survive recovery:recoverySeconds": {
+      "n": 2,
+      "raw": [
+        60.984,
+        61.328
+      ],
+      "median": 61.156000000000006,
+      "min": 60.984,
+      "max": 61.328
+    },
+    "Failed release detected and recovered through Git:recoverySeconds": {
+      "n": 2,
+      "raw": [
+        136.5,
+        132.25
+      ],
+      "median": 134.375,
+      "min": 132.25,
+      "max": 136.5
+    },
+    "Explicit local preview fixture discovered, isolated alert fires, complete cleanup removes live metrics:cleanupSeconds": {
+      "n": 2,
+      "raw": [
+        55.828,
+        52.578
+      ],
+      "median": 54.203,
+      "min": 52.578,
+      "max": 55.828
+    }
+  }
+}

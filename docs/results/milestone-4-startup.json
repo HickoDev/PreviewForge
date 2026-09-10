@@ -1,0 +1,18 @@
+{
+  "completedAt": "2026-09-10T11:38:26.985985+00:00",
+  "stopStartVerificationSeconds": 70.437,
+  "stagingPvcUid": "cfda1bb8-cce6-456e-acfc-444de8357872",
+  "prometheusPvcUid": "4c4d3d40-290b-45b7-9199-f40da25513aa",
+  "preservedTaskCount": 3,
+  "historicalQueryTime": 1789039234.8375404,
+  "historicalQuery": "previewforge_build_info{namespace=\"staging\"}",
+  "historicalResultPreserved": true,
+  "versionPreserved": {
+    "source_sha": "cdd6de85bc5916123a8007ef59f52b55a9c4afc4",
+    "environment": "staging"
+  },
+  "healthyScrapeTargets": 4,
+  "dashboardPanelCount": 8,
+  "documentedStopStartAndMonitoringUp": "passed",
+  "screenshot": "grafana-m4-dashboard.png"
+}
