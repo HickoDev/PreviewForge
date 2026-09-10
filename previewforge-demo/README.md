@@ -5,3 +5,5 @@ This logical application component contains the task API, Alembic migrations, de
 Run the root [startup and verification procedure](../docs/setup.md). Compose deliberately lives at the platform root so PostgreSQL/Floci have one local owner. There is no worker/export API yet; that arrives with Terraform integration in Milestone 5.
 
 The runtime image runs as UID 10001 with a read-only root filesystem in Compose. The test image adds pytest/httpx/ruff. Application dependencies and test dependencies are separately pinned with hashes.
+
+<!-- Milestone 5 export acceptance b -->
