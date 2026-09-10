@@ -19,6 +19,10 @@ import preview_state as state
 CI_PATH = ".github/workflows/demo-ci.yml"
 
 
+class PackagePending(ValueError):
+    """A newly published package has not exposed its repository association yet."""
+
+
 class GitHub:
     def __init__(self):
         # Local development uses gh as HickoDev. This adapter is ONLY for the
@@ -292,8 +296,8 @@ def publish(github, build):
         try:
             private_package(github)
             break
-        except urllib.error.HTTPError as exc:
-            if exc.code != 404 or attempt == 5:
+        except (urllib.error.HTTPError, PackagePending) as exc:
+            if (isinstance(exc, urllib.error.HTTPError) and exc.code != 404) or attempt == 5:
                 raise
             time.sleep(2)
     build["image"] = {
@@ -316,6 +320,8 @@ def private_package(github, allow_missing=False):
     state.require(
         package["visibility"] == "private", "Refusing publication to a non-private package"
     )
+    if not package.get("repository"):
+        raise PackagePending("Package repository association is not available yet")
     state.require(
         package.get("repository", {}).get("full_name") == state.REPOSITORY,
         "Package must belong to the PreviewForge repository",
