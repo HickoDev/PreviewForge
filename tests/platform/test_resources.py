@@ -1,10 +1,12 @@
 """Offline regressions for local-only resource scope and coordinated cleanup."""
 
+import importlib
 import json
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
@@ -13,7 +15,86 @@ from reconciler import runtime as r  # noqa: E402
 from reconciler import terraform as tf  # noqa: E402
 
 
+def acceptance_module():
+    # Process/PR guards are stdlib checks; no cloud client is needed for these regressions.
+    with patch.dict(
+        sys.modules,
+        {"app.aws": SimpleNamespace(Cloud=None), "app.seed": SimpleNamespace(DEMO_TITLES=[])},
+    ):
+        return importlib.import_module("verify_resources")
+
+
 class ResourceGuards(unittest.TestCase):
+    def test_worker_pause_refuses_another_node_before_exec(self):
+        check = acceptance_module()
+        with (
+            patch.object(check.p, "owned_container", return_value=None),
+            patch.object(check.p, "run") as execute,
+        ):
+            with self.assertRaisesRegex(ValueError, "node owner"):
+                check.worker_process({}, "preview-42")
+            execute.assert_not_called()
+
+    def test_worker_pause_checks_container_pod_identity_before_signaling(self):
+        check = acceptance_module()
+        pod = {
+            "metadata": {"uid": "selected"},
+            "status": {
+                "containerStatuses": [{"name": "worker", "containerID": "containerd://" + "a" * 64}]
+            },
+        }
+        inspected = {"status": {"labels": {"io.kubernetes.pod.uid": "somebody-else"}}}
+        with (
+            patch.object(check.p, "owned_container", return_value={"owned": True}),
+            patch.object(check, "worker_pod", return_value=pod),
+            patch.object(check.p, "run", return_value=json.dumps(inspected)),
+            patch.object(check, "signal_worker") as signal,
+        ):
+            with self.assertRaisesRegex(ValueError, "selected worker"):
+                check.pause_worker({}, "preview-42")
+            signal.assert_not_called()
+
+    def test_worker_resume_does_not_signal_a_replacement_container(self):
+        check = acceptance_module()
+        journal = {
+            "paused": {
+                "uid": "same-pod",
+                "pod": "worker",
+                "namespace": "preview-42",
+                "container": "a" * 64,
+                "pid": 100,
+            }
+        }
+        pod = {
+            "metadata": {"uid": "same-pod"},
+            "status": {
+                "containerStatuses": [
+                    {
+                        "name": "worker",
+                        "containerID": "containerd://" + "b" * 64,
+                        "state": {"running": {}},
+                    }
+                ]
+            },
+        }
+        with (
+            patch.object(check.v, "optional", return_value=pod),
+            patch.object(check, "save"),
+            patch.object(check, "signal_worker") as signal,
+        ):
+            check.resume_worker(journal)
+            signal.assert_not_called()
+            self.assertIsNone(journal["paused"])
+
+    def test_acceptance_cleanup_preserves_new_pr_work(self):
+        check = acceptance_module()
+        with patch.object(
+            check, "api", return_value={"head": {"ref": "acceptance/test", "sha": "new-work"}}
+        ) as api:
+            with self.assertRaisesRegex(ValueError, "new work"):
+                check.close_pr({"number": 42, "branch": "acceptance/test", "sha": "tested-work"})
+            api.assert_called_once_with("pulls/42")
+
     def test_close_during_plan_stops_before_apply(self):
         with tempfile.TemporaryDirectory(prefix="previewforge-m5-test-") as folder:
             with (

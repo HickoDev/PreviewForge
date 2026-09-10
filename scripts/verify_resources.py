@@ -3,6 +3,7 @@
 import base64
 import copy
 import json
+import re
 import secrets
 from datetime import UTC, datetime
 
@@ -13,6 +14,7 @@ from reconciler import runtime as r
 from reconciler import terraform as tf
 
 from app.aws import Cloud
+from app.seed import DEMO_TITLES
 
 JOURNAL = r.RUNTIME / "verification-recovery.json"
 RESULT = r.RUNTIME / "milestone-5-verification.json"
@@ -112,24 +114,61 @@ def worker_pod(name):
     )
 
 
+def worker_process(pod, namespace):
+    r.require(p.owned_container(p.NODE, "io.x-k8s.kind.cluster"), "Wrong kind node owner")
+    status = next(x for x in pod["status"]["containerStatuses"] if x["name"] == "worker")
+    identifier = status["containerID"].removeprefix("containerd://")
+    r.require(re.fullmatch(r"[a-f0-9]{64}", identifier), "Unexpected worker container ID")
+    value = json.loads(p.run("docker", "exec", p.NODE, "crictl", "inspect", identifier, quiet=True))
+    labels = value["status"]["labels"]
+    r.require(
+        labels.get("io.kubernetes.pod.uid") == pod["metadata"]["uid"]
+        and labels.get("io.kubernetes.pod.namespace") == namespace
+        and labels.get("io.kubernetes.container.name") == "worker",
+        "Container does not belong to the selected worker",
+    )
+    pid = int(value["info"]["pid"])
+    r.require(pid > 1, "Worker is not running inside the owned node")
+    return {"container": identifier, "pid": pid}
+
+
+def signal_worker(process, signal):
+    r.require(signal in {"STOP", "CONT"} and process["pid"] > 1, "Invalid worker signal")
+    # Container PID 1 ignores an in-container SIGSTOP. Signal from its parent PID namespace.
+    p.run(
+        "docker",
+        "exec",
+        p.NODE,
+        "sh",
+        "-c",
+        'kill -s "$1" "$2"',
+        "previewforge-signal",
+        signal,
+        str(process["pid"]),
+        quiet=True,
+    )
+
+
 def pause_worker(journal, name):
     pod = worker_pod(name)
+    process = worker_process(pod, name)
     journal["paused"] = {
         "namespace": name,
         "pod": pod["metadata"]["name"],
         "uid": pod["metadata"]["uid"],
+        **process,
     }
     save(journal)
-    p.k(
-        "-n",
-        name,
-        "exec",
-        pod["metadata"]["name"],
-        "--",
-        "python",
-        "-c",
-        "import os,signal; os.kill(1,signal.SIGSTOP)",
-        quiet=True,
+    signal_worker(process, "STOP")
+    p.wait_for(
+        "worker process confirmed stopped",
+        lambda: (
+            p.run("docker", "exec", p.NODE, "cat", f"/proc/{process['pid']}/stat", quiet=True)
+            .rsplit(")", 1)[1]
+            .split()[0]
+            == "T"
+        ),
+        10,
     )
 
 
@@ -139,17 +178,14 @@ def resume_worker(journal):
         return
     pod = v.optional("pod", value["pod"], value["namespace"])
     if pod and pod["metadata"]["uid"] == value["uid"]:
-        p.k(
-            "-n",
-            value["namespace"],
-            "exec",
-            value["pod"],
-            "--",
-            "python",
-            "-c",
-            "import os,signal; os.kill(1,signal.SIGCONT)",
-            quiet=True,
-        )
+        current = next(x for x in pod["status"]["containerStatuses"] if x["name"] == "worker")
+        if (
+            current.get("containerID") == "containerd://" + value["container"]
+            and "running" in current["state"]
+        ):
+            process = worker_process(pod, value["namespace"])
+            r.require(process["pid"] == value["pid"], "Worker PID changed; preserve it for review")
+            signal_worker(process, "CONT")
     journal["paused"] = None
     save(journal)
 
@@ -157,6 +193,10 @@ def resume_worker(journal):
 def close_pr(pr):
     value = api("pulls/" + str(pr["number"]))
     r.require(value["head"]["ref"] == pr["branch"], "Acceptance PR branch changed")
+    if "sha" in pr:
+        r.require(
+            value["head"]["sha"] == pr["sha"], "Acceptance PR has new work; preserve it for review"
+        )
     if value["state"] == "open":
         api("pulls/" + str(pr["number"]), "PATCH", {"state": "closed"})
     name = "preview-" + str(pr["number"])
@@ -177,11 +217,18 @@ def recover():
     for branch in journal["branches"]:
         r.require(branch.startswith(journal["prefix"] + "-"), "Unowned acceptance branch")
         for pr in api("pulls?state=all&head=HickoDev:" + branch):
-            close_pr({"number": pr["number"], "branch": branch})
+            recorded = next((x for x in journal["prs"] if x["branch"] == branch), None)
+            close_pr(recorded or {"number": pr["number"], "branch": branch})
     v.reconcile(apply=True)
     for branch in journal["branches"]:
         refs = api("git/matching-refs/heads/" + branch)
-        if any(x["ref"] == "refs/heads/" + branch for x in refs):
+        ref = next((x for x in refs if x["ref"] == "refs/heads/" + branch), None)
+        if ref:
+            recorded = next((x for x in journal["prs"] if x["branch"] == branch), None)
+            r.require(
+                not recorded or ref["object"]["sha"] == recorded["sha"],
+                "Acceptance branch has new work; preserve it for review",
+            )
             api("git/refs/heads/" + branch, "DELETE")
     JOURNAL.unlink()
     print("Acceptance PRs, namespaces, resources and temporary branches cleaned up.", flush=True)
@@ -200,9 +247,10 @@ def verify():
     }
     save(journal)
     result = {"at": datetime.now(UTC).isoformat(), "checks": [], "prs": []}
+    r.save(RESULT, result)
 
     def checked(name, **details):
-        result["checks"].append({"name": name, **details})
+        result["checks"].append({"name": name, "at": datetime.now(UTC).isoformat(), **details})
         r.save(RESULT, result)
         print("PASS: " + name, flush=True)
 
@@ -219,12 +267,16 @@ def verify():
         r.require(
             len({x["bucket"] for x in resources_before.values()}) == 3, "Report buckets collide"
         )
-        checked("three isolated resource sets", resources=resources_before)
+        checked("three isolated resource sets", resources=resources_before, previews=dict(pairs))
         reports = []
         for index, name in enumerate(names):
             port = 18051 + index
             with p.forward(namespace=name, port=port):
-                r.require(p.http("/tasks", port=port)[1] == [], "Preview database was not empty")
+                initial = p.http("/tasks", port=port)[1]
+                r.require(
+                    len(initial) == 3 and {x["title"] for x in initial} == set(DEMO_TITLES),
+                    "Unexpected tasks in the seeded preview",
+                )
                 code, task = p.http(
                     "/tasks",
                     method="POST",
@@ -232,11 +284,35 @@ def verify():
                     port=port,
                 )
                 r.require(code == 201, "Could not create isolated task")
-                reports.append(export(port, [task]))
+                reports.append(export(port, [*initial, task]))
+                r.require(
+                    reports[-1]["environment"] == name, "Export identifies another environment"
+                )
+                observed = Cloud(r.ENDPOINT, name)
+                try:
+                    observed.s3.head_object(
+                        Bucket=observed.bucket, Key="exports/" + reports[-1]["export_id"] + ".json"
+                    )
+                finally:
+                    observed.close()
         checked("two real PR exports and isolated task snapshots")
         cloud = Cloud(r.ENDPOINT, names[0])
         try:
             with p.forward(namespace=names[0], port=18051):
+                p.wait_for(
+                    "initial export queue drained",
+                    lambda: all(
+                        int(x) == 0
+                        for x in cloud.sqs.get_queue_attributes(
+                            QueueUrl=cloud.queue_url(),
+                            AttributeNames=[
+                                "ApproximateNumberOfMessages",
+                                "ApproximateNumberOfMessagesNotVisible",
+                            ],
+                        )["Attributes"].values()
+                    ),
+                    45,
+                )
                 pause_worker(journal, names[0])
                 try:
                     code, job = p.http("/exports", method="POST", payload={}, port=18051)
@@ -330,7 +406,11 @@ def verify():
                 {name: tf.ensure(name) for name in ["staging", *names]} == resources_before,
                 "PR update replaced resources",
             )
-            checked("real PR update changes only its image and preserves resource identities")
+            result["prs"] = copy.deepcopy(prs)
+            checked(
+                "real PR update changes only its image and preserves resource identities",
+                updated=updated,
+            )
             # Restart the owned emulator without removing its persistent volume.
             r.inspect_floci()
             p.run("docker", "restart", r.FLOCI, quiet=True)
@@ -380,6 +460,11 @@ def verify():
             )
         finally:
             cloud.close()
+    except BaseException as exc:
+        result["failure"] = str(exc)
+        r.save(RESULT, result)
+        print("Acceptance failed: " + str(exc), flush=True)
+        raise
     finally:
         recover()
     result["completed"] = True

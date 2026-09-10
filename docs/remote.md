@@ -4,10 +4,10 @@ The private `HickoDev/PreviewForge` repository now drives the local kind cluster
 
 ## Start and inspect
 
-Start Docker Desktop with Linux containers. From the PreviewForge checkout, resume the existing cluster and run the namespace/credential reconciler:
+Start Docker Desktop with Linux containers. From the PreviewForge checkout, resume the existing cluster, Floci and Terraform resources, then run the local reconciler:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 start
+python scripts/resources.py up --github
 python scripts/previews.py watch --github --apply
 ```
 
@@ -26,7 +26,7 @@ python scripts/previews.py forward --github --pr 123 --port 18042
 
 Open `http://127.0.0.1:18042/docs`. The command refuses PRs without a desired record. Acceptance PRs are closed after testing, so their forwards intentionally stop working.
 
-`start` resumes the retained node and preserves its current Git source. It refuses to create a replacement if the node is missing. The older `up`, `verify`, and `demo` commands use the synthetic local Git fixture; they refuse to overwrite remote staging. See [local mode](previews.md) for that separate demonstration.
+`resources.py up` resumes the retained node and preserves its current Git source. It refuses to create a replacement if the node is missing. It brings up export dependencies before waiting for the API. The older platform/local-preview `up`, `verify`, and `demo` commands use the synthetic local Git fixture; they refuse to overwrite remote staging. See [local mode](previews.md) for that separate demonstration and [exports](resources.md) for Milestone 5 operations.
 
 ## Recovery and shutdown
 
@@ -45,7 +45,7 @@ To stop the cluster while retaining staging data, first stop forwards and the wa
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 stop
 ```
 
-Resume with `platform.ps1 start` and the watcher command above. This procedure uses the existing node and locally configured credentials; rebuilding a lost node or configuring a fresh laptop is a separate operation.
+Resume with `resources.py up --github` and the watcher command above. This procedure uses the existing node and locally configured credentials; rebuilding a lost node or configuring a fresh laptop is a separate operation.
 
 ## Credentials and delivery rules
 
@@ -53,7 +53,7 @@ Resume with `platform.ps1 start` and the watcher command above. This procedure u
 - The laptop's private GHCR pull credential is a HickoDev classic PAT with only `read:packages`. It is stored in the owned Kubernetes Secret and never sent to Actions. To rotate it, run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-registry.ps1`, enter it at the hidden prompt, then restart/reconcile the watcher.
 - Actions uses its short-lived repository token. `PREVIEWFORGE_REMOTE_ENABLED=true` enables publication and record cleanup. `PREVIEWFORGE_PACKAGE_ID` pins the package verified through the owner's read credential: GitHub's Actions response can omit the linked repository field. Package name, owner and private visibility are checked; an available repository association must match PreviewForge. No personal token is stored in a repository variable.
 - Only successful builds for the current open PR head, authored by HickoDev in this repository, receive previews. Failed updates retain their last working image. Old or closed-PR build completions cannot deploy.
-- PR close/merge removes its record. Scheduled reconciliation and manual workflow dispatch recover missed close events and expire records after 48 hours. Argo removes workloads/storage, then the laptop watcher removes the owned namespace. Local cleanup resumes when the laptop reconnects.
+- PR close/merge removes its record. Scheduled reconciliation and manual workflow dispatch recover missed close events and expire records after 48 hours. Argo removes workloads/storage, then the laptop watcher removes the owned namespace and its Terraform-managed Floci bucket/queue. Local cleanup resumes when the laptop reconnects.
 - A merge starts a separate main build. Staging reports that main commit's SHA, which differs from the PR head. Configuration commits do not trigger another image build.
 
 Repository and package remain private. API forwards bind only to `127.0.0.1`. Separate databases and storage have been verified; enforced network isolation between namespaces is not implemented.
