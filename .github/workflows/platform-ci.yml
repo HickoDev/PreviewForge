@@ -1,16 +1,16 @@
 name: Platform CI
 on:
   pull_request:
-    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', 'observability/**', '.github/workflows/**']
+    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', 'observability/**', 'terraform/**', 'reconciler/**', 'bootstrap/**', '.github/workflows/**']
   push:
     branches: [main]
-    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', 'observability/**', '.github/workflows/**']
+    paths: ['scripts/**', 'tests/platform/**', 'charts/**', 'gitops/**', 'observability/**', 'terraform/**', 'reconciler/**', 'bootstrap/**', '.github/workflows/**']
 permissions:
   contents: read
 jobs:
   check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -20,8 +20,18 @@ jobs:
       - name: Python lint and formatting with locked dependencies
         run: |
           docker build --target test --tag previewforge-checks previewforge-demo
-          docker run --rm -v "$PWD:/repo:ro" previewforge-checks ruff check --config /app/pyproject.toml --no-cache /repo/scripts /repo/tests/platform
-          docker run --rm -v "$PWD:/repo:ro" previewforge-checks ruff format --check --config /app/pyproject.toml --no-cache /repo/scripts /repo/tests/platform
+          docker run --rm -v "$PWD:/repo:ro" previewforge-checks ruff check --config /app/pyproject.toml --no-cache /repo/scripts /repo/reconciler /repo/tests/platform
+          docker run --rm -v "$PWD:/repo:ro" previewforge-checks ruff format --check --config /app/pyproject.toml --no-cache /repo/scripts /repo/reconciler /repo/tests/platform
+      - name: Terraform lifecycle against an isolated local Floci
+        run: |
+          FLOCI_IMAGE=$(python3 -c 'import json; print(json.load(open("bootstrap/milestone5-tools.lock.json"))["floci"])')
+          docker run --detach --name previewforge-terraform-ci --publish 127.0.0.1:4566:4566 --env FLOCI_STORAGE_MODE=memory "$FLOCI_IMAGE"
+          trap 'docker rm --force previewforge-terraform-ci' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:4566/health >/dev/null; then break; fi
+            sleep 2
+          done
+          docker run --rm --network host -v "$PWD:/repo:ro" previewforge-checks python /repo/scripts/check_resources.py
       - name: Check workflow syntax with checksum-verified Actionlint
         run: |
           curl --fail --location --output "$RUNNER_TEMP/actionlint.tar.gz" https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz

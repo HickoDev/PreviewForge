@@ -298,14 +298,25 @@ def delete_namespace(target):
 
 def reconcile(apply=False):
     records, removed = plan()
+    import resources
+
+    with_resources = REMOTE and resources.active()
     print(
-        json.dumps({"dryRun": not apply, "ensure": sorted(records), "removeNamespaces": removed}),
+        json.dumps(
+            {
+                "dryRun": not apply,
+                "ensure": sorted(records),
+                "removeNamespaces": removed,
+                "terraformIntegration": with_resources,
+            }
+        ),
         flush=True,
     )
     if not apply:
         return
     if REMOTE:
         copy_registry_secret("staging")
+    resource_errors = resources.run_resources("ensure", records) if with_resources else []
     for record in records.values():
         ensure_namespace(record)
         retry_missing_namespace(record)
@@ -318,6 +329,10 @@ def reconcile(apply=False):
             420,
         )
         delete_namespace(target)
+    if with_resources:
+        resource_errors.extend(resources.run_resources("cleanup"))
+    if resource_errors:
+        raise RuntimeError("Resource reconciliation incomplete: " + "; ".join(resource_errors))
 
 
 def retry_missing_namespace(record):
@@ -505,7 +520,10 @@ def main():
         elif args.action == "watch":
             state.require(args.apply, "watch requires --apply; use reconcile for a dry run")
             while True:
-                reconcile(apply=True)
+                try:
+                    reconcile(apply=True)
+                except Exception as exc:
+                    print("Reconciliation will retry: " + str(exc)[-1600:], flush=True)
                 time.sleep(15)
         elif args.action == "reconcile":
             reconcile(apply=args.apply)

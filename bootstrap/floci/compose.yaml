@@ -1,0 +1,15 @@
+# This is the same project/service/volume as the application's Compose setup.
+# Starting the platform emulator never starts a second service on port 4566.
+name: previewforge-m1
+services:
+  floci:
+    image: floci/floci:2.0.1@sha256:4e451c39c7bb88e3cd4f87e8fc0c25d5b47695a51185d521e2241fa00486e8eb
+    ports: ["127.0.0.1:4566:4566"]
+    environment:
+      FLOCI_HOSTNAME: floci
+      FLOCI_BASE_URL: http://floci:4566
+      FLOCI_STORAGE_MODE: persistent
+      FLOCI_STORAGE_PERSISTENT_PATH: /app/data
+    volumes: [floci-data:/app/data]
+volumes:
+  floci-data:

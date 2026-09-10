@@ -479,6 +479,7 @@ def verify(trials=2):
                         "image.pullPolicy": "IfNotPresent",
                         "imagePullSecrets[0].name": "previewforge-ghcr",
                         "failureExercise.enabled": "true",
+                        "exports.enabled": "false",
                     }.items()
                 ]
                 p.apply(app)
