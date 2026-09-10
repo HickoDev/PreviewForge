@@ -11,6 +11,12 @@ seed: false
 imagePullSecrets: []
 failureExercise:
   enabled: false
+exports:
+  enabled: false
+  endpoint: http://floci.previewforge-system.svc.cluster.local:4566
+workerResources:
+  requests: {cpu: 50m, memory: 64Mi}
+  limits: {cpu: 500m, memory: 256Mi}
 database:
   image: postgres:17.9-alpine@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
   name: previewforge

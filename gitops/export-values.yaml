@@ -1,0 +1,4 @@
+# Explicitly enabled by resources.py up after local resources are provisioned.
+exports:
+  enabled: true
+  endpoint: http://floci.previewforge-system.svc.cluster.local:4566

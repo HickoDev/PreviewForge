@@ -36,6 +36,15 @@ previewforge.io/lifecycle: preview
   value: {{ .Values.environment | quote }}
 - name: ENABLE_FAILURE_EXERCISE
   value: {{ .Values.failureExercise.enabled | toString | quote }}
+- name: EXPORTS_ENABLED
+  value: {{ .Values.exports.enabled | toString | quote }}
+{{- if .Values.exports.enabled }}
+{{- if ne .Values.exports.endpoint "http://floci.previewforge-system.svc.cluster.local:4566" }}
+{{- fail "Kubernetes exports must use the owned local Floci Service" }}
+{{- end }}
+- name: FLOCI_ENDPOINT
+  value: {{ .Values.exports.endpoint | quote }}
+{{- end }}
 {{- end -}}
 
 {{- define "demo.security" -}}
