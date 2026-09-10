@@ -76,7 +76,7 @@ def create_app(settings: Settings | None = None, engine=None):
     def live():
         return {"status": "alive"}
 
-    @app.get("/health/ready")
+    @app.get("/health/ready", summary="Check API and database readiness")
     def ready(session: Database):
         session.execute(text("SELECT 1"))
         session.execute(select(Task.id).limit(1))
