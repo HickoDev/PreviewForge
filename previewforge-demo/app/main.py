@@ -1,3 +1,5 @@
+import json
+import logging
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Annotated
@@ -51,6 +53,16 @@ def create_app(settings: Settings | None = None, engine=None, cloud=None):
 
     @app.exception_handler(SQLAlchemyError)
     async def database_error(request, exc):
+        logging.getLogger("previewforge.database").warning(
+            json.dumps(
+                {
+                    "event": "database_unavailable",
+                    "error_type": type(exc).__name__,
+                    "database_port": settings.database_port,
+                    "connection_refused": "connection refused" in str(exc).lower(),
+                }
+            )
+        )
         return JSONResponse(status_code=503, content={"detail": "Database unavailable"})
 
     @app.exception_handler(BotoCoreError)

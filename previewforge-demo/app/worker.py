@@ -8,11 +8,6 @@ import threading
 import time
 from pathlib import Path
 
-from app.aws import Cloud
-from app.config import Settings
-from app.database import make_engine
-from app.exports import dispatch, process_message, repair_reports
-
 HEARTBEAT = Path("/tmp/previewforge-worker.json")
 
 
@@ -28,8 +23,19 @@ def main():
     )
     args = parser.parse_args()
     if args.action == "health":
-        value = json.loads(HEARTBEAT.read_text())
-        raise SystemExit(0 if time.time() - value["loop" if args.live else "healthy"] < 60 else 1)
+        try:
+            value = json.loads(HEARTBEAT.read_text())
+            age = time.time() - value["loop" if args.live else "healthy"]
+        except (OSError, ValueError, KeyError, TypeError):
+            raise SystemExit(1) from None
+        raise SystemExit(0 if 0 <= age < 60 else 1)
+    # Probes run frequently under a CPU quota. Importing the SDK/ORM/FastAPI for
+    # each heartbeat check caused five-second exec timeouts and false restarts.
+    from app.aws import Cloud
+    from app.config import Settings
+    from app.database import make_engine
+    from app.exports import dispatch, process_message, repair_reports
+
     settings = Settings()
     if not settings.exports_enabled:
         raise ValueError("Worker requires exports to be enabled explicitly")
@@ -73,7 +79,9 @@ def main():
                 )
                 if args.once:
                     raise SystemExit(1) from None
-            HEARTBEAT.write_text(json.dumps({"loop": time.time(), "healthy": healthy}))
+            temporary = HEARTBEAT.with_suffix(".tmp")
+            temporary.write_text(json.dumps({"loop": time.time(), "healthy": healthy}))
+            temporary.replace(HEARTBEAT)
             if args.once:
                 break
             stop.wait(1)
