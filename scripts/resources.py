@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import socket
 import subprocess
 import sys
 import time
@@ -35,16 +36,23 @@ def activate_exports():
         "--jq",
         ".sha",
     )
-    p.k(
-        "-n",
-        "staging",
-        "exec",
-        "deployment/demo-api",
-        "--",
-        "python",
-        "-c",
-        "import app.worker",
-        quiet=True,
+    p.wait_for(
+        "export-capable API container",
+        lambda: (
+            p.k(
+                "-n",
+                "staging",
+                "exec",
+                "deployment/demo-api",
+                "--",
+                "python",
+                "-c",
+                "import app.worker",
+                quiet=True,
+            )
+            == ""
+        ),
+        180,
     )
     for kind, name in [("application", "staging"), ("applicationset", "previewforge-previews")]:
         value = p.get(kind, name, "argocd")
@@ -77,6 +85,19 @@ def activate_exports():
     p.k(
         "-n", "staging", "rollout", "status", "deployment/demo-worker", "--timeout=180s", quiet=True
     )
+    # Kubernetes can briefly report readiness from before a node restart.
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        port = listener.getsockname()[1]
+    with p.forward(port=port):
+        p.wait_for(
+            "live API/database/export readiness",
+            lambda: (
+                p.http("/health/ready", port=port)
+                == (200, {"status": "ready", "database": "connected", "exports": "ready"})
+            ),
+            120,
+        )
 
 
 def current_previews():
