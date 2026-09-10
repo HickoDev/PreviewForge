@@ -531,7 +531,7 @@ def main():
             state.require(name in desired(), "Preview is not desired")
             print(f"{name}: http://127.0.0.1:{args.port}/docs (Ctrl+C to stop)", flush=True)
             with p.forward(namespace=name, port=args.port) as process:
-                process.wait()
+                p.wait_forward(process)
         else:
             p.k("-n", "argocd", "get", "applicationsets,applications")
 

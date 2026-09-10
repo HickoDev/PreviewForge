@@ -163,7 +163,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "previewforge_build_info{namespace=~\"$namespace\"}",
+          "expr": "max by(namespace, source_sha) (previewforge_build_info{namespace=~\"$namespace\"})",
           "instant": true,
           "range": false,
           "format": "table",
@@ -178,7 +178,20 @@
         "defaults": {
           "unit": "none"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Environment"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "showHeader": true
