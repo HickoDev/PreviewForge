@@ -200,10 +200,16 @@ def main():
             print(path.read_text() if path.exists() else name + ": pending")
         return
     with r.lock(p.RUNTIME / "operation.lock"):
+        if args.action == "up":
+            r.require(
+                p.owned_container(p.NODE, "io.x-k8s.kind.cluster"),
+                "Restore the retained PreviewForge node; refusing to create a replacement",
+            )
+            r.bootstrap_floci()
+            p.ensure_cluster()
         v.ensure_transport()
         if args.action == "up":
             r.settings(create=True)
-            r.bootstrap_floci()
             r.route_floci()
             r.save(r.RUNTIME / "enabled.json", {"owner": r.OWNER})
             v.reconcile(apply=True)

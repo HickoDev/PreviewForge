@@ -2,8 +2,9 @@ terraform {
   required_version = "= 1.16.2"
   required_providers {
     aws = {
-      source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      source = "hashicorp/aws"
+      # Later queue import parsers reject emulator URLs; keep the tested local-compatible release.
+      version = "= 6.9.0"
     }
   }
 }
@@ -53,7 +54,7 @@ variable "installation" {
 }
 
 module "environment" {
-  source       = "../../modules/environment-resources"
+  source       = "../modules/environment-resources"
   environment  = var.environment
   installation = var.installation
 }

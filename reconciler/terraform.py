@@ -173,7 +173,7 @@ def prepare(environment):
         r.save(ownership, identity)
     validate_state(environment)
     sources = r.p.ROOT / "terraform"
-    module = r.RUNTIME / "modules/environment-resources"
+    module = r.RUNTIME / "environments/modules/environment-resources"
     module.mkdir(parents=True, exist_ok=True)
     for target, source_dir in [
         (module, sources / "modules/environment-resources"),

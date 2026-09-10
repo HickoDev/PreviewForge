@@ -35,12 +35,11 @@ Requires the existing GitHub-mode setup, Windows Python 3.12, running Docker Des
 Run these from the PreviewForge folder:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 start
 python scripts/resources.py up --github
 python scripts/previews.py watch --github --apply
 ```
 
-Keep the watcher running. `up` installs checksum-pinned Terraform and hashed Python dependencies into `%LOCALAPPDATA%\PreviewForge\tools\milestone5`, starts the shared persistent Floci container, discovers its Docker network address, and refreshes the private Kubernetes route. It provisions resources before enabling the tracked `gitops/export-values.yaml` overlay on the configured Argo applications. Earlier local fixture workflows keep exports disabled. The watcher automatically uses this integration once enabled.
+Keep the watcher running. `up` installs checksum-pinned Terraform and hashed Python dependencies into `%LOCALAPPDATA%\PreviewForge\tools\milestone5`, resumes the retained cluster and shared persistent Floci container, discovers Floci's Docker network address, and refreshes the private Kubernetes route. It provisions resources before waiting for export readiness and enabling the tracked `gitops/export-values.yaml` overlay on the configured Argo applications. Earlier local fixture workflows keep exports disabled. The watcher automatically uses this integration once enabled. Use this startup command after Milestone 5: the older `platform.ps1 start` waits for API readiness before it can repair missing export dependencies.
 
 In another terminal:
 
@@ -83,6 +82,8 @@ Terraform state, locks, logs and installation identity live outside Git, OneDriv
 ```
 
 Every bucket and queue carries project, environment and installation ownership tags. The controller checks these through boto3 before planning or importing. It rejects other resources, conflicting ownership, unexpected state addresses, nonlocal endpoints and implicit replacement/deletion. Automatic destroy is restricted to closed previews. Preserve this runtime directory: losing its installation identity requires review, since the controller will refuse to adopt resources it cannot identify.
+
+The AWS provider is pinned to **6.9.0** for local URL import compatibility. We tested 6.64.0 and found that its queue importer requires an AWS-shaped HTTPS URL, including when importing by identity. Keeping the compatible provider lets state recovery use the same explicit Floci URLs as ordinary operations. Windows and Linux package checksums are committed in Terraform's lock file; version upgrades must pass the full import/recovery test.
 
 On PR close, GitHub removes the desired record; Argo removes its workloads. The local watcher removes the owned namespace and waits for its storage to disappear, then destroys the bucket and queue. Partial cleanup retains state and retries on the next pass. Staging is never part of automatic preview cleanup. If the laptop was off, start it with the commands above; Git is still the source of desired previews.
 

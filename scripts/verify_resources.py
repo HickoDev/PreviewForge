@@ -210,7 +210,7 @@ def verify():
         with p.forward():
             baseline = p.http("/tasks")[1]
             staging_report = export(18000, baseline)
-        pvc_uid = p.get("pvc", "data-demo-postgres-0")["metadata"]["uid"]
+        pvc_uid = p.get("pvc", "demo-postgres")["metadata"]["uid"]
         prs = [open_pr(journal, "a"), open_pr(journal, "b")]
         result["prs"] = copy.deepcopy(prs)
         pairs = [wait_record(pr) for pr in prs]
@@ -372,7 +372,7 @@ def verify():
                     "Staging report changed",
                 )
             r.require(
-                p.get("pvc", "data-demo-postgres-0")["metadata"]["uid"] == pvc_uid,
+                p.get("pvc", "demo-postgres")["metadata"]["uid"] == pvc_uid,
                 "Staging PVC changed",
             )
             checked(
