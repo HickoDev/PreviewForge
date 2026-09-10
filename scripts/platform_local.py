@@ -9,12 +9,14 @@ import os
 import re
 import secrets
 import shutil
+import socket
 import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
 import zipfile
+from http.client import HTTPException
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -167,7 +169,7 @@ def wait_for(description, predicate, timeout=300):
             result = predicate()
             if result:
                 return result
-        except (RuntimeError, urllib.error.URLError, TimeoutError, KeyError) as exc:
+        except (RuntimeError, urllib.error.URLError, HTTPException, TimeoutError, KeyError) as exc:
             last_error = str(exc)[-500:]
         if time.monotonic() >= next_notice:
             print(f"Waiting: {description} ...", flush=True)
@@ -659,6 +661,17 @@ def start():
         ensure_git_server()
     wait_staging()
     k("-n", "staging", "rollout", "status", "deployment/demo-api", "--timeout=180s")
+    # After a node restart, Kubernetes can briefly report readiness from before
+    # shutdown. Probe the running API and its database before declaring success.
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        port = listener.getsockname()[1]
+    with forward(port=port):
+        wait_for(
+            "resumed API/database readiness",
+            lambda: http("/health/ready", port=port)[0] == 200,
+            120,
+        )
     print("Retained staging resumed. Start the remote preview watcher if GitHub mode is active.")
 
 
