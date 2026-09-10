@@ -30,7 +30,7 @@ def database_engine():
 @pytest.fixture
 def db(database_engine):
     with database_engine.begin() as connection:
-        connection.execute(text("TRUNCATE TABLE tasks"))
+        connection.execute(text("TRUNCATE TABLE tasks, exports"))
     yield database_engine
 
 

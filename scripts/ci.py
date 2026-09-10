@@ -39,7 +39,23 @@ def test():
         ]
         try:
             run(*compose, "build", "tests", env=env)
-            run(*compose, "up", "--detach", "--wait", "--wait-timeout", "120", "test-db", env=env)
+            # The CI-only override avoids publishing the emulator's host port.
+            override = Path(directory) / "floci-ci.yaml"
+            override.write_text(
+                "services:\n  floci:\n    ports: !reset []\n    volumes: !reset []\n    environment:\n      FLOCI_STORAGE_MODE: memory\n  tests:\n    environment:\n      PREVIEWFORGE_EXPORT_TESTS: '1'\n"
+            )
+            compose.extend(["--file", override])
+            run(
+                *compose,
+                "up",
+                "--detach",
+                "--wait",
+                "--wait-timeout",
+                "120",
+                "test-db",
+                "floci",
+                env=env,
+            )
             for command in (
                 ["ruff", "check", "--no-cache", "."],
                 ["ruff", "format", "--check", "--no-cache", "."],

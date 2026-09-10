@@ -12,7 +12,12 @@ import botocore.session
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-ALLOWED_ENDPOINTS = {"http://127.0.0.1:4566", "http://localhost:4566", "http://floci:4566"}
+ALLOWED_ENDPOINTS = {
+    "http://127.0.0.1:4566",
+    "http://localhost:4566",
+    "http://floci:4566",
+    "http://floci.previewforge-system.svc.cluster.local:4566",
+}
 
 
 def validate_endpoint(endpoint: str) -> str:
