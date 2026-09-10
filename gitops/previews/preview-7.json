@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "repository": "HickoDev/PreviewForge",
+  "pr": 7,
+  "environment": "preview-7",
+  "image": {
+    "repository": "ghcr.io/hickodev/previewforge-demo",
+    "digest": "sha256:18cad590e511f446cddfe31cb14ea305d3793577d0e76fd8731b37cd0e8c1d84",
+    "pullPolicy": "IfNotPresent"
+  },
+  "sourceSha": "1d885c46cf24fdbef8b5e08c3ff8024be6937c2a",
+  "createdAt": "2026-09-10T13:04:58.715253+00:00",
+  "updatedAt": "2026-09-10T13:04:58.715253+00:00",
+  "expiresAt": "2026-09-12T13:04:58.715253+00:00",
+  "build": {
+    "runId": 34480253748,
+    "attempt": 1
+  }
+}
