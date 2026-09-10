@@ -78,6 +78,15 @@ class Store:
 
 
 class Lifecycle(unittest.TestCase):
+    def test_resume_refuses_to_create_a_replacement_for_missing_staging_node(self):
+        with (
+            patch.object(previews.p, "owned_container", return_value=None),
+            patch.object(previews.p, "ensure_cluster") as create,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "No retained"):
+                previews.p.start()
+            create.assert_not_called()
+
     def test_watcher_resumes_only_missing_namespace_failure_for_current_image(self):
         record = update({}, build(), pr())[s.PREFIX + "preview-42.json"]
         app = {
