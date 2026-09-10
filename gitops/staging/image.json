@@ -1,8 +1,8 @@
 {
   "image": {
     "repository": "ghcr.io/hickodev/previewforge-demo",
-    "digest": "sha256:88dd7c59a89e7182ba92a4a377c75040f6da59cb5730387afa4b00241e766d1b",
+    "digest": "sha256:c99b7c32e4e656794c49af424a16caa7073b5daa361034cef4ddf20b1f80bd92",
     "pullPolicy": "IfNotPresent"
   },
-  "sourceSha": "79a64d6c752601d2f1afaee22743fe1682eedd70"
+  "sourceSha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614"
 }
