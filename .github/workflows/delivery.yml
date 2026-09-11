@@ -10,6 +10,7 @@ jobs:
     if: >-
       vars.PREVIEWFORGE_REMOTE_ENABLED == 'true' &&
       github.repository == 'HickoDev/PreviewForge' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15

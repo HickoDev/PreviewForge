@@ -2,11 +2,11 @@
 
 The assistant explains a selected synthetic PreviewForge API deployment using its immutable image identity, Argo status, safe configuration fields, pod state, recent events and application logs. Every factual observation cites an evidence ID and an exact excerpt. Hypotheses remain suggestions for a person to check. It has no deployment, rollback, Terraform, shell, exec or GitHub-writing capability.
 
-**Implemented and mock-tested. NVIDIA live access and model quality are pending your private key and explicit live tests.** Mock mode uses the deterministic baseline; it does not run or simulate a real language model.
+**Implemented and mock-tested. Hosted calls require a privately configured key and explicit live opt-in; see the [live verification record](results/milestone-6-live.md) for tested behavior and remaining acceptance.** Mock mode uses the deterministic baseline; it does not run or simulate a real language model.
 
 ## Start and use mock mode
 
-Prerequisites are the configured Windows Python 3.12 / Docker Desktop / kind setup from [Milestone 5](resources.md). Run from the PreviewForge folder, with Docker Desktop running:
+Prerequisites are the configured Windows Python 3.12 / Docker Desktop / kind setup from [Milestone 5](resources.md). Run from the PreviewForge folder, with Docker Desktop running. Stop an existing preview watcher before `resources.py up --github`; restart it in a separate terminal after setup for ordinary PR lifecycle operations:
 
 ```powershell
 python scripts/resources.py up --github
@@ -15,7 +15,7 @@ python scripts/assistant.py diagnose --fixture wrong-port
 python scripts/assistant.py diagnose --environment staging
 ```
 
-`up` builds trusted platform code, loads its immutable manifest into the retained kind node and configures Argo CD to reconcile `charts/ai-assistant`. It defaults to mock mode even if a NVIDIA Secret exists. It publishes no assistant image; the image must be loaded on each replacement kind node. The private GitHub repo is the existing platform repo. The local chart option is a development bootstrap, and refuses to compete once Argo owns the service.
+`up` builds trusted platform code, loads its immutable manifest into the retained kind node and configures Argo CD to reconcile `charts/ai-assistant`. It defaults to mock mode even if a NVIDIA Secret exists. It publishes no assistant image; the image must be loaded on each replacement kind node. GitHub uses the existing platform repository. The local chart option is a development bootstrap, and refuses to compete once Argo owns the service.
 
 For the API documentation:
 
@@ -39,9 +39,11 @@ Remove diagnostic authorization with `python scripts/assistant.py revoke --envir
 
 ## Configure your NVIDIA key after review
 
-The candidate default is **`meta/llama-3.3-70b-instruct`**. Its current [NVIDIA API reference](https://docs.api.nvidia.com/nim/re/reference/meta-llama-3_3-70b-instruct-infer) documents the hosted endpoint, system/user messages, temperature, maximum output tokens and non-streaming requests used here. The [model card](https://docs.api.nvidia.com/nim/re/reference/meta-llama-3_3-70b-instruct) lists its context length and links its license. This verifies the documented interface, not access from your account.
+The default is **`nvidia/nemotron-3-super-120b-a12b`**, hosted at NVIDIA's existing HTTPS endpoint. Its [catalog example](https://build.nvidia.com/nvidia/nemotron-3-super-120b-a12b) documents chat completion requests. The [model card](https://build.nvidia.com/nvidia/nemotron-3-super-120b-a12b/modelcard) documents its context, license and non-thinking option. For this exact model, the adapter sends `chat_template_kwargs.enable_thinking=false`, temperature `1.0` and `top_p=0.95`, with the existing 1,500-token response limit. Other model selections retain the generic request settings; model-specific options are never sent indiscriminately.
 
-Before live use, open the [NVIDIA API Catalog](https://build.nvidia.com/meta/llama-3_3-70b-instruct) in your browser, confirm that your account can invoke the model, and review the current model terms and account quota. Follow NVIDIA's [hosted API key setup](https://docs.api.nvidia.com/nim/re/docs/api-quickstart). A registry-download key does not by itself establish hosted inference access; see the [NGC account/key guide](https://docs.nvidia.com/ngc/latest/ngc-user-guide.html). No permanent free quota or production entitlement is assumed.
+The original `meta/llama-3.3-70b-instruct` returned HTTP 410 during live verification. Its [catalog entry](https://build.nvidia.com/meta/llama-3_3-70b-instruct) marks the hosted endpoint deprecated, even though its API reference remains online. The adapter reports `model_unavailable` and stops; it never silently changes model or provider.
+
+Before live use, open the [NVIDIA API Catalog](https://build.nvidia.com/nvidia/nemotron-3-super-120b-a12b) in your browser, confirm that your account can invoke the model, and review the current model terms and account quota. Follow NVIDIA's [hosted API key setup](https://docs.api.nvidia.com/nim/re/docs/api-quickstart). A registry-download key does not by itself establish hosted inference access; see the [NGC account/key guide](https://docs.nvidia.com/ngc/latest/ngc-user-guide.html). No permanent free quota or production entitlement is assumed.
 
 Run this command yourself in an interactive terminal:
 
@@ -59,6 +61,8 @@ python scripts/assistant.py live-smoke --allow-live
 ```
 
 Enabling hosted mode alone does not call NVIDIA. Each diagnostic request additionally needs explicit live opt-in and a separate local access token. The CLI supplies that token privately; application previews do not have it. The smoke test sends a small sanitized synthetic fixture to NVIDIA and allows at most two HTTP attempts. Reported usage covers returned completions; retries/timeouts can consume additional quota without returning usage. A provider failure is separate from an AI abstention.
+
+Smoke/evaluation commands save the sanitized report and return a nonzero exit status for provider errors, invalid output or a mismatch with the labeled expectation. Retired/rejected models stop the run after the first failing case. A successful exit still does not replace review of the model's factual claims.
 
 If the smoke passes and your account has sufficient quota, run the bounded evaluation:
 
@@ -89,6 +93,8 @@ python scripts/assistant.py test
 python -m unittest discover -s tests/platform -v
 python scripts/assistant.py evaluate
 ```
+
+`test` builds the `previewforge-ai-tests` image used by the evaluation baseline. `evaluate` additionally requires the running assistant in mock mode; it refuses a service configured for NVIDIA. Start mock mode using the commands above, and stop a manual assistant forward before evaluation or use `--port 18082`.
 
 Tests run in a container with **`--network none`**, and the test suite additionally rejects socket connections. Mocked HTTP cases cover missing keys, invalid credentials, inaccessible models, redirects, rate limits, Retry-After, timeouts, server errors, excessive bodies, malformed/truncated output, invalid citations, wrong identities and prompt/secret injection. Dependencies and the Python base image are pinned and hash-checked.
 

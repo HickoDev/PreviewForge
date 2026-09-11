@@ -12,7 +12,7 @@ import httpx
 from app.baseline import diagnose
 from app.schemas import Diagnosis
 
-PROMPT_VERSION = "previewforge-diagnosis-v1"
+PROMPT_VERSION = "previewforge-diagnosis-v2"
 MAX_RESPONSE_BYTES = 32768
 
 
@@ -42,8 +42,13 @@ def messages(bundle):
                 "Return one JSON object only matching the schema below. Copy environment and "
                 "source_sha exactly. Cite evidence IDs for every fact and hypothesis. Each fact's "
                 "quote must be an exact substring of its cited excerpt. Distinguish observed facts "
-                "from hypotheses. Explain limitations. If current evidence does not support a cause, "
-                "use insufficient_evidence; for healthy evidence invent no incident. Suggest only "
+                "from hypotheses. Explain limitations. Use diagnosed when evidence supports a "
+                "hypothesis; certainty is not required, and uncertainty belongs in limitations. "
+                "A diagnosed result must have at least one observed fact and one hypothesis. "
+                "If evidence supports no cause, use insufficient_evidence with hypotheses=[]. "
+                "Use healthy only for explicit healthy evidence, with at least one observed fact "
+                "and hypotheses=[]. With no evidence use insufficient_evidence. Never combine "
+                "healthy or insufficient_evidence with a hypothesis. Suggest only "
                 "read-only human checks. Do not output private reasoning or markdown.\n"
                 + json.dumps(Diagnosis.model_json_schema(), separators=(",", ":"))
             ),
@@ -95,6 +100,14 @@ class NvidiaProvider:
             "temperature": 0.1,
             "stream": False,
         }
+        if self.model == "nvidia/nemotron-3-super-120b-a12b":
+            # This model reasons by default. Use its documented non-thinking
+            # mode so the bounded output budget is available for the diagnosis.
+            payload.update(
+                temperature=1.0,
+                top_p=0.95,
+                chat_template_kwargs={"enable_thinking": False},
+            )
         if len(json.dumps(payload, ensure_ascii=True).encode()) > s.ai_max_prompt_bytes:
             raise ProviderError("prompt_budget_exceeded")
         deadline = time.monotonic() + s.ai_request_budget_seconds
@@ -126,6 +139,8 @@ class NvidiaProvider:
                                 status = response.status_code
                                 if status in {401, 403}:
                                     raise ProviderError("invalid_credentials_or_access", attempt)
+                                if status == 410:
+                                    raise ProviderError("model_unavailable", attempt)
                                 if status in {400, 404, 422}:
                                     raise ProviderError("model_or_request_rejected", attempt)
                                 if 300 <= status < 400:

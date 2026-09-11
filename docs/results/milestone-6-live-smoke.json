@@ -1,0 +1,224 @@
+{
+  "started_at": "2026-09-10T18:18:40.425708+00:00",
+  "mode": "nvidia",
+  "planned_cases": 1,
+  "cases": [
+    {
+      "id": "wrong-port",
+      "version": 1,
+      "split": "development",
+      "trial": 1,
+      "expected": {
+        "status": "diagnosed",
+        "causes": [
+          "Database port mismatch"
+        ],
+        "required_sources": [
+          "deployment",
+          "service",
+          "log"
+        ]
+      },
+      "scores": {
+        "matched_expected": true,
+        "valid_references": true,
+        "supported_cause": true,
+        "abstained": false,
+        "unsupported_statements": null,
+        "human_review": "pending: compare every factual claim and suggested check with cited excerpts and the labeled expectation"
+      },
+      "baseline": {
+        "status": "diagnosed",
+        "environment": "preview-42",
+        "source_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "summary": "Evidence suggests: Database port mismatch.",
+        "observed_facts": [
+          {
+            "statement": "Observed deployment evidence: ready=false\nDATABASE_PORT=5433",
+            "evidence_ids": [
+              "deployment-1"
+            ],
+            "quote": "ready=false\nDATABASE_PORT=5433"
+          },
+          {
+            "statement": "Observed service evidence: service_port=5432",
+            "evidence_ids": [
+              "service-1"
+            ],
+            "quote": "service_port=5432"
+          },
+          {
+            "statement": "Observed log evidence: database connection refused",
+            "evidence_ids": [
+              "log-1"
+            ],
+            "quote": "database connection refused"
+          },
+          {
+            "statement": "Observed diff evidence: - DATABASE_PORT=5432\n+ DATABASE_PORT=5433",
+            "evidence_ids": [
+              "diff-1"
+            ],
+            "quote": "- DATABASE_PORT=5432\n+ DATABASE_PORT=5433"
+          }
+        ],
+        "hypotheses": [
+          {
+            "cause": "Database port mismatch",
+            "evidence_ids": [
+              "deployment-1",
+              "service-1",
+              "log-1",
+              "diff-1"
+            ],
+            "limitations": [
+              "This is a hypothesis; confirm the intended configuration and current runtime state."
+            ]
+          }
+        ],
+        "suggested_checks": [
+          "Compare the intended database port with the PostgreSQL Service port."
+        ],
+        "missing_evidence": []
+      },
+      "round_trip_ms": 8906.0,
+      "report": {
+        "metadata": {
+          "request_id": "51c4b174-d202-4007-b1f0-33babd46ea0f",
+          "timestamp": "2026-09-10T18:18:45.468889+00:00",
+          "environment": "preview-42",
+          "source_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "observed_image": "synthetic-fixture@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "config_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "provider": "nvidia",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "prompt_version": "previewforge-diagnosis-v2",
+          "evidence_sha256": "e7f4b6c63ddddaf61fca6ba64f142bad86b3fc8f6214f98650aec21c82ecae2b",
+          "attempts": 2,
+          "usage": {
+            "prompt_tokens": 1333,
+            "completion_tokens": 566,
+            "total_tokens": 1899
+          },
+          "usage_note": "Returned usage covers completed responses; timed-out/retried attempts may also consume quota.",
+          "elapsed_ms": 8646.81
+        },
+        "diagnosis": {
+          "status": "diagnosed",
+          "environment": "preview-42",
+          "source_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "summary": "The deployment is failing due to a database port mismatch between the container configuration and the service definition. The container is configured to use port 5433, but the service exposes port 5432, causing connection refused errors.",
+          "observed_facts": [
+            {
+              "statement": "The deployment configuration shows DATABASE_PORT=5433 and ready=false",
+              "evidence_ids": [
+                "deployment-1"
+              ],
+              "quote": "ready=false\nDATABASE_PORT=5433"
+            },
+            {
+              "statement": "The service definition exposes port 5432",
+              "evidence_ids": [
+                "service-1"
+              ],
+              "quote": "service_port=5432"
+            },
+            {
+              "statement": "The diff reveals a change in DATABASE_PORT from 5432 to 5433",
+              "evidence_ids": [
+                "diff-1"
+              ],
+              "quote": "- DATABASE_PORT=5432\n+ DATABASE_PORT=5433"
+            },
+            {
+              "statement": "The application logs indicate a database connection refused error",
+              "evidence_ids": [
+                "log-1"
+              ],
+              "quote": "database connection refused"
+            }
+          ],
+          "hypotheses": [
+            {
+              "cause": "Database port mismatch",
+              "evidence_ids": [
+                "deployment-1",
+                "service-1",
+                "diff-1",
+                "log-1"
+              ],
+              "limitations": [
+                "The evidence does not confirm whether the database itself is listening on port 5432 or 5433, only that there is a mismatch between the container's configured port and the service's exposed port.",
+                "No logs were provided showing the actual port the database process is bound to inside the container.",
+                "The connection refusal could theoretically stem from other issues (e.g., database not running), but the port mismatch is the most direct explanation given the evidence."
+              ]
+            }
+          ],
+          "suggested_checks": [
+            "Verify the database container's actual listening port by checking its process or configuration inside the container.",
+            "Confirm the service's port mapping and ensure it targets the correct container port.",
+            "Review the database initialization logs to confirm it is listening on the expected port.",
+            "Test connectivity from the application container to the database using the service name and port 5432 to isolate the issue."
+          ],
+          "missing_evidence": []
+        },
+        "error": null,
+        "evidence": [
+          {
+            "id": "deployment-1",
+            "source": "deployment",
+            "timestamp": "2026-09-10T18:18:45.466417Z",
+            "environment": "preview-42",
+            "source_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "revision": null,
+            "excerpt": "ready=false\nDATABASE_PORT=5433"
+          },
+          {
+            "id": "service-1",
+            "source": "service",
+            "timestamp": "2026-09-10T18:18:45.466417Z",
+            "environment": "preview-42",
+            "source_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "revision": null,
+            "excerpt": "service_port=5432"
+          },
+          {
+            "id": "diff-1",
+            "source": "diff",
+            "timestamp": "2026-09-10T18:18:45.466417Z",
+            "environment": "preview-42",
+            "source_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "excerpt": "- DATABASE_PORT=5432\n+ DATABASE_PORT=5433"
+          },
+          {
+            "id": "log-1",
+            "source": "log",
+            "timestamp": "2026-09-10T18:18:45.466417Z",
+            "environment": "preview-42",
+            "source_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "revision": null,
+            "excerpt": "database connection refused"
+          }
+        ],
+        "missing_evidence": []
+      }
+    }
+  ],
+  "scope": "Small synthetic fixture evaluation. Mock uses the deterministic baseline; it measures plumbing, not model quality. Live claims need human review.",
+  "summary": {
+    "completed_cases": 1,
+    "matched_expected": 1,
+    "valid_references": 1,
+    "abstentions": 0,
+    "attempts": 2,
+    "latency_ms": {
+      "median": 8906.0,
+      "min": 8906.0,
+      "max": 8906.0
+    },
+    "unsupported_statements": null,
+    "human_review_pending": true
+  },
+  "completed_at": "2026-09-10T18:18:54.129242+00:00"
+}

@@ -34,6 +34,8 @@ class GitHubCli:
             body = copy.deepcopy(body)
             if path == "git/commits" and method == "POST":
                 body["message"] = self.message
+                body["author"] = p.GITHUB_COMMIT_IDENTITY.copy()
+                body["committer"] = p.GITHUB_COMMIT_IDENTITY.copy()
             payload = p.RUNTIME / "monitoring-github-request.json"
             payload.write_text(json.dumps(body), encoding="utf-8")
             args.extend(["--input", str(payload)])

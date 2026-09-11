@@ -1,6 +1,8 @@
 # Milestone 2: local Kubernetes and GitOps
 
-This milestone runs the real task API and PostgreSQL on a single-node kind cluster. Argo CD reads a local Git repository, renders the Helm chart, runs migrations and reconciles persistent staging. [Milestone 3](previews.md) extends this setup with ApplicationSet previews and prepared GitHub delivery.
+This guide covers the initial local Git fixture: a real task API and PostgreSQL on a single-node kind cluster. Argo CD reads a local Git repository, renders the Helm chart, runs migrations and reconciles persistent staging. [Milestone 3](previews.md) extends this setup with ApplicationSet previews and verified GitHub delivery.
+
+For the already configured GitHub/GHCR installation, use [the current resume procedure](remote.md). The `up` and `verify` commands below are local-mode commands and refuse to replace remote staging. Initial local setup is distinct from configuring GitHub credentials and delivery on a fresh laptop.
 
 ## Start on Windows
 
@@ -24,7 +26,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 forwa
 
 Then visit [staging Swagger](http://127.0.0.1:18000/docs), [readiness](http://127.0.0.1:18000/health/ready), [version](http://127.0.0.1:18000/version) and [metrics](http://127.0.0.1:18000/metrics). Ctrl+C closes the forward; staging continues running. Port 18000 binds only to loopback. All application/database Services are ClusterIP; there is no Ingress or public load balancer.
 
-Milestone 1 Compose can remain running on loopback ports 8000/4566. Its PostgreSQL is separate from staging. Compose continues to own the sole Floci instance; Milestone 2 does not start another emulator. Kubernetes-to-Floci SDK wiring remains for the AWS integration milestone.
+Milestone 1 Compose can remain running on loopback ports 8000/4566. Its PostgreSQL is separate from staging. Compose continues to own the sole Floci instance; this local fixture does not start another emulator or enable exports. [Milestone 5](resources.md) supplies Kubernetes-to-Floci routing and exports for the configured GitHub installation.
 
 ## Verify the working system
 
@@ -62,7 +64,7 @@ $pfKubectl = Join-Path $env:LOCALAPPDATA 'PreviewForge\tools\milestone2\kubectl.
 & $pfKubectl --kubeconfig "$pfRuntime\kubeconfig" --context kind-previewforge-m2 -n argocd get application staging
 ```
 
-`/health/live` asks whether the API process is alive. `/health/ready` additionally checks the database and schema. A database outage should remove the pod from traffic, not repeatedly restart a healthy API process. Kubernetes pod conditions, events, Argo status, request logs and `/metrics` provide this milestone's visibility. Prometheus/Grafana dashboards remain Milestone 4.
+`/health/live` asks whether the API process is alive. `/health/ready` additionally checks the database and schema. A database outage should remove the pod from traffic, not repeatedly restart a healthy API process. Kubernetes pod conditions, events, Argo status, request logs and `/metrics` provide this fixture's visibility. The configured GitHub installation also has [Prometheus/Grafana dashboards](observability.md).
 
 ## Where desired state lives
 
@@ -82,7 +84,7 @@ git -C $pfSource -c user.name='PreviewForge local fixture' -c user.email=fixture
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 publish-local
 ```
 
-`publish-local` copies Git refs between two filesystem directories. It does not push to GitHub or rebuild the application. `verify` refreshes the managed fixture inputs from this checkout and creates a second source/image revision. Fixture commits include only the files belonging to that operation, and builds require a clean fixture at the declared source SHA. Later GitHub integration will replace this local transport with the approved remote workflow.
+`publish-local` copies Git refs between two filesystem directories. It does not push to GitHub or rebuild the application. `verify` refreshes the managed fixture inputs from this checkout and creates a second source/image revision. Fixture commits include only the files belonging to that operation, and builds require a clean fixture at the declared source SHA. The configured GitHub installation uses [SSH Git reads and private GHCR pulls](remote.md) instead of this fixture transport.
 
 ## Storage and ownership
 

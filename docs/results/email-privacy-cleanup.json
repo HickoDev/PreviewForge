@@ -1,0 +1,151 @@
+{
+  "checked_at": "2026-09-10T22:16:44.979543+00:00",
+  "repository": "HickoDev/PreviewForge",
+  "repository_private": true,
+  "noreply": "157824011+HickoDev@users.noreply.github.com",
+  "rewrite": {
+    "prepared_commits": 79,
+    "source_trees_unchanged": 79,
+    "published_heads": [
+      "refs/heads/demo/blue-20260910t184528z 854fa575c614b75d9d2e71c168e1c8e1f07ec7ee",
+      "refs/heads/demo/green-20260910t184528z 7b4d0bd79b7f63df6edba3fbf0609d64fea9d595",
+      "refs/heads/main 9748c4b843d3eab08dd1d77a242a6c97c138c685"
+    ],
+    "verified_reachable_branch_commits": 66,
+    "email_matches_in_branch_metadata": 0,
+    "force_push": "atomic, three explicit branch refs, exact old-SHA leases",
+    "working_files_and_index_preserved": true,
+    "workflows_restored": 5
+  },
+  "future_commit_protection": {
+    "local_git_email_configured": true,
+    "github_api_helpers": "fixed locally with explicit author and committer; not yet committed/pushed",
+    "account_email_privacy_checkboxes": "owner confirmation pending",
+    "public_profile_email": false
+  },
+  "validation": {
+    "platform_tests_passed": 65,
+    "ruff_check": "passed",
+    "ruff_format_check": "passed",
+    "new_github_ci_for_rewritten_shas": "not run; workflows paused during metadata-only push",
+    "open_prs": [
+      {
+        "number": 11,
+        "state": "open",
+        "head": "854fa575c614b75d9d2e71c168e1c8e1f07ec7ee",
+        "base": "9748c4b843d3eab08dd1d77a242a6c97c138c685",
+        "changed_files": 1,
+        "commits": 1
+      },
+      {
+        "number": 12,
+        "state": "open",
+        "head": "7b4d0bd79b7f63df6edba3fbf0609d64fea9d595",
+        "base": "9748c4b843d3eab08dd1d77a242a6c97c138c685",
+        "changed_files": 1,
+        "commits": 1
+      }
+    ],
+    "live_health": {
+      "applications": [
+        {
+          "name": "observability",
+          "sync": "Synced",
+          "health": "Healthy"
+        },
+        {
+          "name": "preview-11",
+          "sync": "Synced",
+          "health": "Healthy"
+        },
+        {
+          "name": "preview-12",
+          "sync": "Synced",
+          "health": "Healthy"
+        },
+        {
+          "name": "previewforge-assistant",
+          "sync": "Synced",
+          "health": "Healthy"
+        },
+        {
+          "name": "staging",
+          "sync": "Synced",
+          "health": "Healthy"
+        }
+      ],
+      "http": [
+        {
+          "port": 18051,
+          "path": "/health/ready",
+          "status": 200,
+          "body": {
+            "status": "ready",
+            "database": "connected",
+            "exports": "ready"
+          }
+        },
+        {
+          "port": 18051,
+          "path": "/version",
+          "status": 200,
+          "body": {
+            "source_sha": "cb5a8eb30416ba6f68c12dfe76f2c1b554132fc3",
+            "environment": "preview-11"
+          }
+        },
+        {
+          "port": 18052,
+          "path": "/health/ready",
+          "status": 200,
+          "body": {
+            "status": "ready",
+            "database": "connected",
+            "exports": "ready"
+          }
+        },
+        {
+          "port": 18052,
+          "path": "/version",
+          "status": 200,
+          "body": {
+            "source_sha": "b5dbd691bde296966f741e7233569fff4792ac97",
+            "environment": "preview-12"
+          }
+        }
+      ],
+      "application_targets": [
+        {
+          "namespace": "staging",
+          "health": "up"
+        },
+        {
+          "namespace": "preview-11",
+          "health": "up"
+        },
+        {
+          "namespace": "preview-12",
+          "health": "up"
+        }
+      ],
+      "target_jobs": [
+        "argocd",
+        "kube-state-metrics",
+        "previewforge-api",
+        "prometheus"
+      ]
+    }
+  },
+  "remaining_exposure": {
+    "pr_commit_lists_with_email": [
+      1,
+      2
+    ],
+    "old_commit_direct_lookup_exposes_email": true,
+    "actions_runs_with_email_metadata": 48,
+    "actions_deletion": "awaiting explicit approval; none deleted",
+    "github_support": "private draft prepared; not submitted; eligibility not guaranteed",
+    "local_backups": "retain original history outside the repository; internal editor snapshots and reflogs were preserved"
+  },
+  "publication_ready_for_email_privacy": false
+}

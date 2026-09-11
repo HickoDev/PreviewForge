@@ -1,5 +1,17 @@
 # Architecture and implementation decisions
 
+## Current platform overview
+
+![PreviewForge architecture: GitHub delivery, local kind environments, Floci exports, monitoring and scoped NVIDIA diagnostics](diagrams/previewforge-architecture-overview.svg)
+
+[Edit the draw.io source](diagrams/previewforge-architecture.drawio) · [Download the three-page PDF](diagrams/previewforge-architecture.pdf) · [Open the overview PNG](diagrams/previewforge-architecture-overview.png)
+
+The native draw.io document contains three pages: platform overview, PR delivery and cleanup, and application runtime with exports and diagnostics. It includes the technology logos and native Kubernetes/AWS resource symbols; shapes, labels, groups and connectors are editable. The SVG, PNG and PDF files were exported with the installed draw.io Desktop application. See the [diagram index, reusable symbol library and export commands](diagrams/README.md).
+
+The diagrams show the configured GitHub delivery mode across all six milestones. Source repository visibility can be private or public; the GHCR package stays private. PR numbers 123 and 124 are examples; their URLs require active local port-forwards. Floci runs beside kind in Docker. The local watcher owns Terraform and namespace preparation; Argo CD owns workload reconciliation. Hosted NVIDIA inference requires explicit opt-in; mock mode is the default. The diagrams describe the architecture, not additional test results or production isolation guarantees.
+
+## Original Compose baseline
+
 ```mermaid
 flowchart LR
   Browser[Host browser / HTTP client] -->|127.0.0.1:8000| API[FastAPI container]
@@ -17,7 +29,7 @@ This diagram shows the original Compose baseline, which keeps exports disabled. 
 | Component | Owns now | Planned later |
 | --- | --- | --- |
 | `previewforge-demo/` | API, export worker, migrations, seed data, tests, Dockerfile | Application extensions |
-| Platform repository root | Compose, kind, Helm, Argo, GitHub/GHCR delivery, local Terraform reconciliation, monitoring, acceptance evidence | AI service |
+| Platform repository root | Compose, kind, Helm, Argo, GitHub/GHCR delivery, local Terraform reconciliation, monitoring, diagnostic assistant, acceptance evidence | Platform extensions |
 | PostgreSQL | Separate storage, tasks, export jobs and durable report snapshots per environment | Application extensions |
 | Floci | Terraform-managed S3 buckets and SQS queues per environment | Additional emulated services if needed |
 
@@ -25,11 +37,11 @@ There is one remote repository. The logical demo component remains inside this c
 
 ## Database and health
 
-SQLAlchemy uses PostgreSQL through psycopg. Alembic creates the schema in a separate, one-shot service; the API starts after that service succeeds. The application does not silently create tables itself. This follows [Compose's dependency health/completion controls](https://docs.docker.com/compose/how-tos/startup-order/) and leaves migrations usable as a later deployment Job.
+SQLAlchemy uses PostgreSQL through psycopg. In Compose, Alembic creates the schema in a separate, one-shot service; the API starts after that service succeeds. The application does not silently create tables itself. This follows [Compose's dependency health/completion controls](https://docs.docker.com/compose/how-tos/startup-order/). In Kubernetes, the chart runs Alembic as a migration Job before API/worker rollout.
 
 Liveness answers whether the process can respond. Readiness checks database connectivity and the task table; when exports are enabled it also checks export storage and the queue. A dependency failure returns a sanitized HTTP 503 for affected requests, while liveness, version and metrics remain available. Database and AWS client calls have bounded timeouts.
 
-PostgreSQL stores records in a project-scoped named Docker volume. Replacing the API container or stopping the stack retains records. Integration tests use a separate `test-db` container with a disposable memory-backed database, never the interactive demo database. The seed command inserts deterministic synthetic rows without overwriting edits.
+Compose PostgreSQL stores records in a project-scoped named Docker volume; Kubernetes environments use separate PVCs. Replacing an API container or stopping the retained stack preserves records. Integration tests use a separate `test-db` container with a disposable memory-backed database, never the interactive demo database. The seed command inserts deterministic synthetic rows without overwriting edits.
 
 ## Credentials and local access
 
@@ -71,13 +83,17 @@ The chart orders database readiness, schema migration and API rollout. Staging h
 
 The local Git fixture demonstrates actual Argo reconciliation without publishing images or installing GitHub credentials in the cluster. It is not a tested GitHub-to-preview workflow. See [Milestone 2 operation and limitations](kubernetes.md) for exact commands and ownership boundaries.
 
-## Dependency sources and update procedure
-
-Milestone 6 adds an independent trusted assistant in `previewforge-ai`. Argo CD owns its Helm-rendered ServiceAccount, Deployment and ClusterIP Service. The local setup command owns its explicit environment policy, namespace-scoped read Roles/Bindings and private credential provisioning. The assistant uses the projected read-only service identity, not the bootstrap's administrator kubeconfig. A request verifies the registered source/image, collects selected evidence, filters it, then uses mock inference or explicitly enabled NVIDIA HTTPS inference. It validates citations and structured output without executing any result. See [diagnostics, privacy and live setup](assistant.md).
+## PR delivery and cleanup
 
 Milestone 3 extends the staging chart with explicitly disposable preview storage and idempotent synthetic seeds. A Git file ApplicationSet generates an application only from a successful build record. The local reconciler owns namespaces and secrets; Argo owns application workloads and PVCs. Argo's deletion finalizer and a separate ownership/UID-checked namespace cleanup complete the preview lifecycle.
 
 The existing remote contains both logical components. CI builds only when application input paths change; a deployment-record commit does not trigger another build. Trusted default-branch delivery code validates build provenance and live PR/main state, then updates selected Git records with conflict-aware retries. Forks do not deploy. Private GitHub/GHCR delivery has been approved and verified; [remote operation](remote.md) documents startup and credentials.
+
+## Read-only diagnostics
+
+Milestone 6 adds an independent trusted assistant in `previewforge-ai`. Argo CD owns its Helm-rendered ServiceAccount, Deployment and ClusterIP Service. The local setup command owns its explicit environment policy, namespace-scoped read Roles/Bindings and private credential provisioning. The assistant uses the projected read-only service identity, not the bootstrap's administrator kubeconfig. A request verifies the registered source/image, collects selected evidence, filters it, then uses mock inference or explicitly enabled NVIDIA HTTPS inference. It validates citations and structured output without executing any result. See [diagnostics, privacy and live setup](assistant.md).
+
+## Dependency sources and update procedure
 
 - [Floci 2.0.1 configuration](https://github.com/floci-io/floci/blob/2.0.1/docs/configuration/environment-variables.md), [S3](https://github.com/floci-io/floci/blob/2.0.1/docs/services/s3.md), [SQS](https://github.com/floci-io/floci/blob/2.0.1/docs/services/sqs.md).
 - [FastAPI container guide](https://fastapi.tiangolo.com/deployment/docker/).

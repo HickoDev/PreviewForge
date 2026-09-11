@@ -4,10 +4,10 @@ Milestone 4 uses Prometheus 3.14.0, Grafana 13.2.1 and kube-state-metrics 2.20.0
 
 ## Start on the configured Windows laptop
 
-Start Docker Desktop, then run from PreviewForge:
+Start Docker Desktop. Stop an existing preview watcher with Ctrl+C, then run from PreviewForge:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 start
+python scripts/resources.py up --github
 python scripts/monitoring.py up
 python scripts/monitoring.py forward --service grafana
 ```
@@ -22,7 +22,7 @@ python scripts/monitoring.py forward --service prometheus
 
 Use **http://127.0.0.1:19090/alerts** for pending/firing rules, or `/targets` for scrape health. Ctrl+C stops each forward. All Services are ClusterIP; these commands bind only to loopback. No email/chat receiver or public tunnel is configured. Stop/start of the retained kind node resumes monitoring; no reinstall is required.
 
-Keep `python scripts/previews.py watch --github --apply` running for ordinary real PR lifecycle operations. Stop that watcher before running a monitoring exercise: both use the same local operation lock.
+After setup, keep `python scripts/previews.py watch --github --apply` running in a separate terminal for ordinary real PR lifecycle operations. Stop that watcher before `monitoring.py up` or a monitoring exercise: they use the same local operation lock. Forwards and status checks can run alongside the watcher. Current startup restores Floci/export dependencies before API readiness; the older Milestone 4 `platform.ps1 start` alone cannot repair those dependencies.
 
 ## Repeatable exercises
 

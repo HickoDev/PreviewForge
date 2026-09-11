@@ -295,7 +295,7 @@ def build_image():
     return manifest
 
 
-def up(live=False, model="meta/llama-3.3-70b-instruct", local_chart=False):
+def up(live=False, model="nvidia/nemotron-3-super-120b-a12b", local_chart=False):
     runtime()
     ensure_namespace()
     grant("staging")
@@ -513,7 +513,7 @@ def main():
         action="store_true",
         help="Send minimized synthetic evidence to NVIDIA; account limits and terms apply",
     )
-    parser.add_argument("--model", default="meta/llama-3.3-70b-instruct")
+    parser.add_argument("--model", default="nvidia/nemotron-3-super-120b-a12b")
     parser.add_argument(
         "--local-chart",
         action="store_true",

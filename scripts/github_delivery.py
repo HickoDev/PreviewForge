@@ -211,9 +211,21 @@ def unpack_artifact(archive, destination, source_sha):
     return path, tag
 
 
+def publication_preflight(github):
+    repository = github.api("")
+    state.require(
+        repository.get("full_name") == state.REPOSITORY,
+        "Publication requires the PreviewForge platform repository",
+    )
+    state.require(type(repository.get("private")) is bool, "Unknown repository visibility")
+    # Public source does not authorize a public registry package. On a public
+    # repository, require the existing package's private visibility before push;
+    # only the original private bootstrap may create a missing package.
+    private_package(github, allow_missing=repository["private"])
+
+
 def publish(github, build):
-    state.require(github.api("")["private"], "Publication requires the private platform repository")
-    private_package(github, allow_missing=True)
+    publication_preflight(github)
     artifacts = github.api(f"actions/runs/{build['runId']}/artifacts?per_page=100")
     name = f"demo-image-{build['attempt']}"
     matches = [x for x in artifacts["artifacts"] if x["name"] == name and not x["expired"]]

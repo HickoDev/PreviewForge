@@ -142,6 +142,9 @@ def evaluate(action="evaluate", trials=1, port=18080):
                     "invalid_credentials_or_access",
                     "rate_limited",
                     "model_or_request_rejected",
+                    "model_unavailable",
+                    "provider_rejected",
+                    "redirect_rejected",
                     "provider_unavailable",
                     "provider_timeout",
                 }:
@@ -168,5 +171,11 @@ def evaluate(action="evaluate", trials=1, port=18080):
     if stop:
         raise RuntimeError(
             "Evaluation stopped on provider/access/quota failure; inspect the sanitized report"
+        )
+    if any(c["report"]["error"] for c in report["cases"]):
+        raise RuntimeError("Evaluation failed on output validation; inspect the sanitized report")
+    if report["summary"]["matched_expected"] != report["planned_cases"]:
+        raise RuntimeError(
+            "Evaluation did not match labeled expectations; inspect the sanitized report"
         )
     return report, output

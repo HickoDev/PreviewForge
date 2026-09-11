@@ -20,6 +20,10 @@ from http.client import HTTPException
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+GITHUB_COMMIT_IDENTITY = {
+    "name": "HickoDev",
+    "email": "157824011+HickoDev@users.noreply.github.com",
+}
 OWNER = "previewforge-m2"
 RUNTIME = Path(os.environ.get("LOCALAPPDATA", "")) / "PreviewForge/runtime" / OWNER
 TOOLS = Path(os.environ.get("LOCALAPPDATA", "")) / "PreviewForge/tools/milestone2"

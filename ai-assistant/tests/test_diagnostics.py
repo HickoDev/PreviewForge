@@ -154,6 +154,7 @@ def test_stale_cross_environment_and_revision_evidence_omitted():
         (403, "invalid_credentials_or_access"),
         (404, "model_or_request_rejected"),
         (400, "model_or_request_rejected"),
+        (410, "model_unavailable"),
         (302, "redirect_rejected"),
         (418, "provider_rejected"),
     ],
@@ -212,6 +213,30 @@ def test_retry_after_longer_than_budget_stops_without_early_retry():
         asyncio.run(NvidiaProvider(live(), httpx.MockTransport(respond)).complete(bundle()))
     assert len(calls) == 1
     assert retry_delay("Thu, 01 Jan 2099 00:00:00 GMT", 1) > 100
+
+
+@pytest.mark.parametrize(
+    "model", ["nvidia/nemotron-3-super-120b-a12b", "mistralai/mistral-nemotron"]
+)
+def test_non_thinking_options_are_only_sent_to_the_supported_model(model):
+    def respond(request):
+        payload = json.loads(request.content)
+        assert payload["max_tokens"] == 1500
+        assert payload["stream"] is False
+        if model == "nvidia/nemotron-3-super-120b-a12b":
+            assert payload["chat_template_kwargs"] == {"enable_thinking": False}
+            assert payload["temperature"] == 1.0
+            assert payload["top_p"] == 0.95
+        else:
+            assert "chat_template_kwargs" not in payload
+            assert "top_p" not in payload
+            assert payload["temperature"] == 0.1
+        return completion()
+
+    result = asyncio.run(
+        NvidiaProvider(live(nvidia_model=model), httpx.MockTransport(respond)).complete(bundle())
+    )
+    assert result.attempts == 1
 
 
 @pytest.mark.parametrize("error", [httpx.ReadTimeout, httpx.ConnectError])

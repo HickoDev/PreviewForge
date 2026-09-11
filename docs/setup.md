@@ -10,9 +10,11 @@
 
 Docker Desktop already worked on the implementation machine. The project does not install/reconfigure Docker, WSL or the machine's Kubernetes context. kind, Helm, Terraform and AWS CLI are unnecessary for this milestone; boto3 performs the emulator checks.
 
+The later full application suite, `python scripts/ci.py test`, requires Python 3.12 and Compose **2.24.4+** for its isolated Floci override. The Compose commands on this page use the baseline configuration. See [all test modes](testing.md).
+
 ## Get the repository
 
-Use a dedicated project directory outside career-ops. Run `gh auth status` and confirm that **HickoDev** is the active GitHub account before cloning:
+Use a dedicated project directory and preserve any existing work. For the owner-operated installation, run `gh auth status` and confirm that **HickoDev** is the active GitHub account before cloning:
 
 ```powershell
 gh repo clone HickoDev/PreviewForge
@@ -20,6 +22,15 @@ Set-Location .\PreviewForge
 ```
 
 If the checkout already exists, open its directory instead of cloning over it.
+
+Once the repository is public, readers can clone its HTTPS URL with Git and run this Compose demo without the owner's GitHub credentials:
+
+```powershell
+git clone https://github.com/HickoDev/PreviewForge.git
+Set-Location .\PreviewForge
+```
+
+This standalone demo does not configure remote PR delivery. Full-platform GitHub scripts retain their explicit owner/repository checks.
 
 ## Start from the repository root
 
@@ -45,7 +56,7 @@ Invoke-RestMethod "$base/version"
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev.ps1 seed
 ```
 
-Statuses are `todo`, `in_progress` and `done`. Titles are trimmed, required and limited to 200 characters. Invalid inputs return 422; a missing task returns 404. Listing accepts `?limit=1&offset=0`, with a maximum page size of 100. There is no authentication or task-delete endpoint in Milestone 1; use synthetic data.
+Statuses are `todo`, `in_progress` and `done`. Titles are trimmed, required and limited to 200 characters. Invalid inputs return 422; updating a missing task returns 404. Listing accepts `?limit=1&offset=0`, with a maximum page size of 100. Updates change status only. The current application has no authentication, frontend or task-delete endpoint; use synthetic data. Exports are disabled in this Compose baseline and enabled in the [configured Kubernetes platform](resources.md).
 
 ## Verify
 
@@ -86,4 +97,4 @@ For an independent local acceptance run, every command accepts `-ProjectName pre
 - Python missing/wrong version: install/select Python 3.12 before `verify`; `up` and `test` run Python inside containers.
 - Floci resources left after an interrupted smoke test: the failing command reports its exact `pf-smoke-<uuid>` identity if cleanup fails. Inspect that identity before any manual deletion; do not delete resources by a broad prefix.
 
-The sole Floci instance for Milestone 1 is the root Compose service. The later platform bootstrap must stop/reuse it when taking ownership of port 4566; it must not start a competing emulator.
+The root Compose service owns the shared Floci instance. The configured Kubernetes platform reuses that container and its volume. Running `dev.ps1 down` therefore also interrupts Kubernetes exports until [resource startup](resources.md) resumes Floci.

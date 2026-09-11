@@ -284,6 +284,60 @@ class Lifecycle(unittest.TestCase):
 
 
 class ArtifactProvenance(unittest.TestCase):
+    def test_public_source_can_deliver_only_to_its_existing_private_package(self):
+        package = {
+            "visibility": "private",
+            "name": "previewforge-demo",
+            "owner": {"login": "HickoDev"},
+            "repository": {"full_name": s.REPOSITORY},
+        }
+        for private in (True, False):
+            with self.subTest(private=private):
+                github = Mock()
+                github.api.side_effect = [
+                    {"full_name": s.REPOSITORY, "private": private},
+                    package,
+                ]
+                delivery.publication_preflight(github)
+        for visibility in ("public", "internal"):
+            github = Mock()
+            github.api.side_effect = [
+                {"full_name": s.REPOSITORY, "private": False},
+                {**package, "visibility": visibility},
+            ]
+            with patch.object(delivery.subprocess, "run") as docker:
+                with self.assertRaisesRegex(ValueError, "non-private"):
+                    delivery.publish(github, build())
+                docker.assert_not_called()
+
+    def test_public_repository_requires_package_visibility_before_any_image_operation(self):
+        missing = delivery.urllib.error.HTTPError(
+            "https://api.github.com", 404, "missing", {}, None
+        )
+        for private in (True, False):
+            github = Mock()
+            github.api.side_effect = [{"full_name": s.REPOSITORY, "private": private}, missing]
+            if private:
+                delivery.publication_preflight(github)
+            else:
+                with patch.object(delivery.subprocess, "run") as docker:
+                    with self.assertRaises(delivery.urllib.error.HTTPError):
+                        delivery.publish(github, build())
+                    docker.assert_not_called()
+
+    def test_unknown_or_unrelated_repository_cannot_publish(self):
+        for repository in (
+            {"full_name": "someone-else/PreviewForge", "private": False},
+            {"full_name": s.REPOSITORY},
+            {"full_name": s.REPOSITORY, "private": "false"},
+        ):
+            github = Mock()
+            github.api.return_value = repository
+            with patch.object(delivery, "private_package") as package:
+                with self.assertRaises(ValueError):
+                    delivery.publication_preflight(github)
+                package.assert_not_called()
+
     def test_repository_metadata_uses_canonical_endpoint(self):
         github = object.__new__(delivery.GitHub)
         github.token = "test-token"

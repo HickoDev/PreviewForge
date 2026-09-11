@@ -3,7 +3,7 @@ image:
   digest: ""
 mode: mock
 liveEnabled: false
-model: meta/llama-3.3-70b-instruct
+model: nvidia/nemotron-3-super-120b-a12b
 policyRevision: initial
 resources:
   requests: {cpu: 100m, memory: 128Mi}

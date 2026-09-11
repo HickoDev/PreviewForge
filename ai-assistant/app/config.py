@@ -13,7 +13,7 @@ class Settings(BaseSettings):
         "https://integrate.api.nvidia.com/v1"
     )
     nvidia_model: str = Field(
-        default="meta/llama-3.3-70b-instruct", pattern=r"^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$"
+        default="nvidia/nemotron-3-super-120b-a12b", pattern=r"^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$"
     )
     nvidia_api_key: SecretStr = SecretStr("")
     ai_access_token: SecretStr = SecretStr("")

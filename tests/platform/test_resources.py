@@ -25,6 +25,23 @@ def acceptance_module():
 
 
 class ResourceGuards(unittest.TestCase):
+    def test_github_source_edits_use_noreply_identity(self):
+        check = acceptance_module()
+        with tempfile.TemporaryDirectory() as folder:
+            with (
+                patch.object(r, "RUNTIME", Path(folder)),
+                patch.object(
+                    r, "save", side_effect=lambda path, body: path.write_text(json.dumps(body))
+                ),
+                patch.object(check.p, "gh", return_value='{"commit":{"sha":"created"}}'),
+            ):
+                body = {"message": "test", "content": "eA=="}
+                check.api("contents/previewforge-demo/README.md", "PUT", body)
+                sent = json.loads((Path(folder) / "verification-request.json").read_text())
+                self.assertEqual(sent["author"], check.p.GITHUB_COMMIT_IDENTITY)
+                self.assertEqual(sent["committer"], check.p.GITHUB_COMMIT_IDENTITY)
+                self.assertNotIn("author", body)
+
     def test_crash_probe_waits_for_message_visibility(self):
         check = acceptance_module()
         with patch.object(

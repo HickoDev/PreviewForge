@@ -1,0 +1,71 @@
+{
+  "repository": "simple-icons/simple-icons",
+  "revision": "5d5d4d1d28cbb00b21770bb69d8112da52211a95",
+  "icons": {
+    "docker": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/docker.svg",
+      "blob_sha": "0021a8a7b34c50389e48d7035b19067f2d909fe3",
+      "bytes": 1765
+    },
+    "kubernetes": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/kubernetes.svg",
+      "blob_sha": "667f2d4725da2500e450a93bbb1d5f9d73dddaa4",
+      "bytes": 3565
+    },
+    "terraform": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/terraform.svg",
+      "blob_sha": "7aafae1318a063f94e4b472523f90b660aac3291",
+      "bytes": 253
+    },
+    "postgresql": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/postgresql.svg",
+      "blob_sha": "dcf75b726dee7a67e7d4a4b6067991d7d15c2f02",
+      "bytes": 5205
+    },
+    "prometheus": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/prometheus.svg",
+      "blob_sha": "32a30255d6992471235663bd187cfc692de1b158",
+      "bytes": 847
+    },
+    "grafana": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/grafana.svg",
+      "blob_sha": "a495a662508df1a41d39a6dcf7ed5b84b9deff39",
+      "bytes": 3817
+    },
+    "nvidia": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/nvidia.svg",
+      "blob_sha": "2c7ff66f8b1f04c24df0d4653f665cd97a228c92",
+      "bytes": 881
+    },
+    "fastapi": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/fastapi.svg",
+      "blob_sha": "ba6ba86ab82c108aad4259a9548494796345bcce",
+      "bytes": 347
+    },
+    "github": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/github.svg",
+      "blob_sha": "538ec5bf2a9a5724899daf728577cd0b8beaae90",
+      "bytes": 822
+    },
+    "githubactions": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/githubactions.svg",
+      "blob_sha": "bc925a351eb6fa2bb0f73a1192c8656db13eb2d3",
+      "bytes": 1727
+    },
+    "git": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/git.svg",
+      "blob_sha": "06fb4e0d9884ae6891e506395fbed2f1bbd07c9c",
+      "bytes": 426
+    },
+    "argo": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/argo.svg",
+      "blob_sha": "fde6bb799edfbf1209d2acb941018a947a7d8faa",
+      "bytes": 5010
+    },
+    "helm": {
+      "source": "https://github.com/simple-icons/simple-icons/blob/5d5d4d1d28cbb00b21770bb69d8112da52211a95/icons/helm.svg",
+      "blob_sha": "ac7b23916e1a943b87276f3228193237c8830386",
+      "bytes": 1519
+    }
+  }
+}

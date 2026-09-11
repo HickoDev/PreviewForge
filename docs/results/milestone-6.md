@@ -1,6 +1,6 @@
 # Milestone 6 results — 2026-09-10
 
-**Implemented and verified in mock mode. Live NVIDIA access, model compatibility for this account, model quality and quota remain untested until the user configures the key and explicitly enables live tests. No hosted inference call was made.**
+**Initial mock verification record. No hosted inference call was made during the checks recorded below. Subsequent user-authorized key configuration and hosted tests are recorded separately in [live verification](milestone-6-live.md).**
 
 The trusted FastAPI assistant runs separately in `previewforge-ai`, with its own immutable local image and Helm chart. The task API, worker, PostgreSQL, Floci resources, preview watcher and monitoring do not depend on it. The NVIDIA adapter uses the documented HTTPS chat endpoint, a configurable model, bounded retries and validated structured results; it has no tools or write credentials.
 
@@ -52,7 +52,7 @@ This single mock evaluation observed a **63 ms median** HTTP round trip, **47–
 
 ## Remaining live acceptance and limitations
 
-The candidate `meta/llama-3.3-70b-instruct` interface was checked against [NVIDIA's current model API reference](https://docs.api.nvidia.com/nim/re/reference/meta-llama-3_3-70b-instruct-infer). Access and quotas are account-specific and have not been tested. After private setup, run one explicit smoke request, then the bounded 13-case evaluation and review the supported/unsupported statements. Do not describe the NVIDIA integration as live-validated before those steps pass.
+At the initial mock checkpoint, the candidate `meta/llama-3.3-70b-instruct` interface had only been checked against its API reference. Subsequent live testing found that hosted model unavailable; see [the replacement and actual live results](milestone-6-live.md). Full acceptance requires the bounded 13-case hosted evaluation and review of supported/unsupported statements. A single smoke case does not establish model quality.
 
 Collection intentionally omits unfamiliar log/configuration text; the first version focuses on API deployment diagnostics and numeric database-port diffs. This is not a general log chatbot or an autonomous remediation agent. No claim of production-grade redaction, real AWS behavior or enforced network isolation is made.
 

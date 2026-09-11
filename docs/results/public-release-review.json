@@ -1,0 +1,95 @@
+{
+  "reviewed_at": "2026-09-10T20:15:32.008297+00:00",
+  "scope": "Local public-release readiness review; repository visibility unchanged",
+  "local_head": "491abaaebfbb567b84515e66b0e62b5e4482ab7f",
+  "fetched_remote_main": "df280dd44c06cc0d8050fb1cb0dd34fcf43eb4a9",
+  "uncommitted_changes_included": true,
+  "tests": {
+    "application": 46,
+    "platform": 63,
+    "assistant": 70,
+    "total": 179
+  },
+  "dependency_audit": {
+    "tool": "pip-audit 2.10.1",
+    "distinct_locked_packages": 41,
+    "skipped": 0,
+    "known_advisories": 0
+  },
+  "secret_scan": {
+    "tool": "Gitleaks 8.30.1",
+    "additional_nvidia_rule": true,
+    "decode_depth": 2,
+    "reachable_commits": 68,
+    "remote_refs": 5,
+    "pr_records": 12,
+    "workflow_logs": 86,
+    "live_credential_findings": 0,
+    "git_worktree_false_positive": "explicit synthetic AI secret canary",
+    "artifacts": {
+      "artifacts": 19,
+      "unique_blobs": 274,
+      "files_scanned": 531,
+      "raw_scanner_findings": 57,
+      "confirmed_public_signing_fingerprints": 57,
+      "credential_findings": 0,
+      "scope": "All retained CI image archive configurations and first-party /app files from all image layers; third-party OS file contents not scanned"
+    }
+  },
+  "validation": {
+    "actionlint": "passed",
+    "python_lint_and_format": "passed",
+    "helm_staging_preview_assistant_monitoring": "passed",
+    "prometheus_config_and_7_alert_rules": "passed",
+    "terraform_isolated_lifecycle": "passed"
+  },
+  "live_applications": [
+    {
+      "name": "observability",
+      "sync": "Synced",
+      "health": "Healthy"
+    },
+    {
+      "name": "preview-11",
+      "sync": "Synced",
+      "health": "Healthy"
+    },
+    {
+      "name": "preview-12",
+      "sync": "Synced",
+      "health": "Healthy"
+    },
+    {
+      "name": "previewforge-assistant",
+      "sync": "Synced",
+      "health": "Healthy"
+    },
+    {
+      "name": "staging",
+      "sync": "Synced",
+      "health": "Healthy"
+    }
+  ],
+  "preserved": [
+    "open PRs #11 and #12",
+    "running watcher and forwards",
+    "staging and preview data",
+    "unrelated local work and containers"
+  ],
+  "not_performed": [
+    "commit or push",
+    "repository/package visibility changes",
+    "image publication",
+    "hosted inference calls",
+    "disruptive cluster restart/fault exercises",
+    "OS/container vulnerability audit",
+    "public-repository live delivery verification",
+    "full hosted model-quality acceptance"
+  ],
+  "owner_decisions_pending": [
+    "credential rotation confirmation",
+    "existing commit-email publication",
+    "project license if releasing as open source",
+    "commit/push reviewed changes before changing visibility"
+  ]
+}

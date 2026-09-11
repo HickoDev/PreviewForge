@@ -1,15 +1,18 @@
 import base64
+import copy
 import io
 import json
 import sys
+import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import nullcontext, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 import assistant as a
 import assistant_evidence as evidence
+import evaluate_assistant as evaluation
 
 
 class AssistantBoundaries(unittest.TestCase):
@@ -86,6 +89,59 @@ class AssistantBoundaries(unittest.TestCase):
             with self.assertRaises(ValueError):
                 a.apply_owned("ConfigMap", "previewforge-ai-policy", {"data": {}})
             kube.assert_not_called()
+
+
+class EvaluationExitStatus(unittest.TestCase):
+    def setUp(self):
+        recorded = json.loads(
+            (a.p.ROOT / "docs/results/milestone-6-evaluation.json").read_text(encoding="utf-8")
+        )["cases"][0]
+        self.report = copy.deepcopy(recorded["report"])
+        self.report["metadata"].update(provider="nvidia", attempts=1)
+        self.baseline = {"wrong-port": recorded["baseline"]}
+
+    def exercise(self, destination, result, action="live-smoke"):
+        with (
+            patch.object(a, "runtime", return_value=Path(destination)),
+            patch.object(a, "forward", return_value=nullcontext()),
+            patch.object(a, "http", side_effect=[{"mode": "nvidia"}, result]) as http,
+            patch.object(evaluation.p, "run", return_value=json.dumps(self.baseline)),
+            redirect_stdout(io.StringIO()),
+        ):
+            try:
+                return evaluation.evaluate(action)
+            finally:
+                self.assertEqual(http.call_count, 2)
+
+    def test_successful_live_smoke_saves_validated_report(self):
+        with tempfile.TemporaryDirectory() as destination:
+            report, output = self.exercise(destination, self.report)
+            self.assertEqual(report["summary"]["matched_expected"], 1)
+            self.assertTrue(output.exists())
+
+    def test_unavailable_provider_stops_full_evaluation_after_one_case(self):
+        for error in ("model_unavailable", "provider_rejected", "redirect_rejected"):
+            with self.subTest(error=error), tempfile.TemporaryDirectory() as destination:
+                result = {**self.report, "diagnosis": None, "error": error}
+                with self.assertRaisesRegex(RuntimeError, "stopped on provider"):
+                    self.exercise(destination, result, "live-evaluate")
+                saved = json.loads(next(Path(destination).glob("*.json")).read_text())
+                self.assertEqual(saved["planned_cases"], 13)
+                self.assertEqual(saved["summary"]["completed_cases"], 1)
+                self.assertEqual(saved["cases"][0]["report"]["error"], error)
+
+    def test_invalid_output_makes_smoke_fail_after_saving_report(self):
+        with tempfile.TemporaryDirectory() as destination:
+            result = {**self.report, "diagnosis": None, "error": "invalid_model_output"}
+            with self.assertRaisesRegex(RuntimeError, "failed on output validation"):
+                self.exercise(destination, result)
+            self.assertEqual(len(list(Path(destination).glob("*.json"))), 1)
+
+    def test_wrong_diagnosis_makes_smoke_fail(self):
+        self.report["diagnosis"].update(status="insufficient_evidence", hypotheses=[])
+        with tempfile.TemporaryDirectory() as destination:
+            with self.assertRaisesRegex(RuntimeError, "did not match labeled expectations"):
+                self.exercise(destination, self.report)
 
 
 if __name__ == "__main__":

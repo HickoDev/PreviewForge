@@ -32,7 +32,7 @@ The committed pending row is an outbox: if sending to SQS fails, the worker retr
 
 Requires the existing GitHub-mode setup, Windows Python 3.12, running Docker Desktop, Git, and `gh` with **HickoDev active**. Registry pulls use the privately configured read-only credential. Do not paste credentials into chat or files in this checkout. Isolated application CI tests require Docker Compose 2.24.4+ (`!reset` support); Compose 5 works.
 
-Run these from the PreviewForge folder:
+Stop an existing watcher with Ctrl+C before setup, then run these from the PreviewForge folder:
 
 ```powershell
 python scripts/resources.py up --github
@@ -45,9 +45,10 @@ In another terminal:
 
 ```powershell
 python scripts/resources.py status --github
-python scripts/resources.py plan --github --environment staging
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 forward
 ```
+
+`status` can run alongside the watcher. To inspect Terraform's plan, stop the watcher, run `python scripts/resources.py plan --github --environment staging`, then restart it. Planning shares the operation lock with setup/reconciliation.
 
 Open http://127.0.0.1:18000/docs. From another terminal, request and download a report:
 
@@ -85,7 +86,7 @@ Terraform state, locks, logs and installation identity live outside Git, OneDriv
   environments\preview-124\terraform.tfstate
 ```
 
-Every bucket and queue carries project, environment and installation ownership tags. The controller checks these through boto3 before planning or importing. It rejects other resources, conflicting ownership, unexpected state addresses, nonlocal endpoints and implicit replacement/deletion. Automatic destroy is restricted to closed previews. Preserve this runtime directory: losing its installation identity requires review, since the controller will refuse to adopt resources it cannot identify.
+Every bucket and queue carries project, environment and installation ownership tags. The controller checks these through boto3 before planning or importing. It rejects other resources, conflicting ownership, unexpected state addresses, nonlocal endpoints and implicit replacement/deletion. Automatic destroy is restricted to owned previews whose desired records and workloads have been removed, including closed or expired previews; staging is excluded. Preserve this runtime directory: losing its installation identity requires review, since the controller will refuse to adopt resources it cannot identify.
 
 The AWS provider is pinned to **6.9.0** for local URL import compatibility. We tested 6.64.0 and found that its queue importer requires an AWS-shaped HTTPS URL, including when importing by identity. Keeping the compatible provider lets state recovery use the same explicit Floci URLs as ordinary operations. Windows and Linux package checksums are committed in Terraform's lock file; version upgrades must pass the full import/recovery test.
 

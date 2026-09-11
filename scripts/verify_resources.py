@@ -23,6 +23,12 @@ RESULT = r.RUNTIME / "milestone-5-verification.json"
 def api(path, method="GET", body=None):
     args = ["api", "repos/HickoDev/PreviewForge/" + path, "--method", method]
     if body is not None:
+        if path.startswith("contents/") and method in {"PUT", "DELETE"}:
+            body = {
+                **body,
+                "author": p.GITHUB_COMMIT_IDENTITY.copy(),
+                "committer": p.GITHUB_COMMIT_IDENTITY.copy(),
+            }
         payload = r.RUNTIME / "verification-request.json"
         r.save(payload, body)
         args.extend(["--input", str(payload)])

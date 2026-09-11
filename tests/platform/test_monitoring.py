@@ -1,6 +1,8 @@
 """Protect staging and other previews during explicit monitoring exercises."""
 
+import json
 import sys
+import tempfile
 import unittest
 import urllib.error
 from pathlib import Path
@@ -12,6 +14,19 @@ import verify_monitoring as verify  # noqa: E402
 
 
 class MonitoringGuards(unittest.TestCase):
+    def test_github_config_commits_use_noreply_identity(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with (
+                patch.object(verify.p, "RUNTIME", Path(folder)),
+                patch.object(verify.p, "gh", return_value='{"sha":"created"}'),
+            ):
+                body = {"tree": "tree", "parents": ["parent"]}
+                verify.GitHubCli().api("git/commits", "POST", body)
+                sent = json.loads((Path(folder) / "monitoring-github-request.json").read_text())
+                self.assertEqual(sent["author"], verify.p.GITHUB_COMMIT_IDENTITY)
+                self.assertEqual(sent["committer"], verify.p.GITHUB_COMMIT_IDENTITY)
+                self.assertNotIn("author", body)
+
     def test_recovery_preserves_new_release_and_unrelated_records(self):
         records = {
             verify.s.STAGING: {"image": "bad"},

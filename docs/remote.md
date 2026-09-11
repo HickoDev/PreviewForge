@@ -1,17 +1,19 @@
 # GitHub delivery on the configured laptop
 
-The private `HickoDev/PreviewForge` repository now drives the local kind cluster. A trusted PR runs CI on GitHub, publishes a private GHCR image, and writes its immutable digest to Git. Argo CD reads that record over SSH and deploys it locally. Nothing connects inbound from GitHub to the laptop.
+The `HickoDev/PreviewForge` repository drives the local kind cluster. A trusted application PR runs CI on GitHub, publishes to a private GHCR package, and writes its immutable digest to Git. Argo CD reads that record over SSH and deploys it locally. Nothing connects inbound from GitHub to the laptop. The current delivery implementation supports private or public source with a private package; real acceptance used a private repository. See [publication status](public-release.md) before changing visibility.
+
+This runbook resumes the existing owner-operated installation. It assumes Windows Python 3.12, Git, Docker Desktop, `gh` with **HickoDev active**, the retained kind node/runtime files, and configured Git/registry credentials. The [activation reference](previews.md#remote-activation-reference) describes the original credential/manifests setup; a complete fresh-laptop bootstrap or lost-node restore has not been verified. For a standalone first run, use [Compose setup](setup.md).
 
 ## Start and inspect
 
-Start Docker Desktop with Linux containers. From the PreviewForge checkout, resume the existing cluster, Floci and Terraform resources, then run the local reconciler:
+Start Docker Desktop with Linux containers. Stop an existing watcher with Ctrl+C before running setup commands. From the PreviewForge checkout, resume the existing cluster, Floci and Terraform resources, then run the local reconciler:
 
 ```powershell
 python scripts/resources.py up --github
 python scripts/previews.py watch --github --apply
 ```
 
-Keep the watcher running. In a second terminal:
+Keep the watcher running. If monitoring needs setup, run `python scripts/monitoring.py up` between `resources.py up --github` and starting the watcher; it uses the same operation lock. An already installed monitoring stack resumes with the node. In a second terminal:
 
 ```powershell
 python scripts/previews.py status --github
@@ -37,7 +39,7 @@ python scripts/previews.py reconcile --github
 python scripts/previews.py reconcile --github --apply
 ```
 
-Then restart `watch --github --apply`. It recovers an Argo sync that exhausted retries because its namespace did not yet exist. It leaves unrelated sync failures visible for investigation. GitHub authentication/API errors stop reconciliation instead of treating unknown state as an empty environment list.
+Then restart `watch --github --apply`. It recovers an Argo sync that exhausted retries because its namespace did not yet exist. It leaves unrelated sync failures visible for investigation. A GitHub authentication/API error aborts that reconciliation pass instead of treating unknown state as an empty environment list. A one-shot command exits with an error; the watcher reports the failure and retries after 15 seconds. It can resume when access is restored.
 
 To stop the cluster while retaining staging data, first stop forwards and the watcher, then run:
 
@@ -56,6 +58,16 @@ Resume with `resources.py up --github` and the watcher command above. This proce
 - PR close/merge removes its record. Scheduled reconciliation and manual workflow dispatch recover missed close events and expire records after 48 hours. Argo removes workloads/storage, then the laptop watcher removes the owned namespace and its Terraform-managed Floci bucket/queue. Local cleanup resumes when the laptop reconnects.
 - A merge starts a separate main build. Staging reports that main commit's SHA, which differs from the PR head. Configuration commits do not trigger another image build.
 
-Repository and package remain private. API forwards bind only to `127.0.0.1`. Separate databases and storage have been verified; enforced network isolation between namespaces is not implemented.
+The GHCR package remains private even when the source repository is public. Delivery checks repository identity and package visibility before image operations, and checks the package again after push. A public repository must already have the verified private package; an absent or unreadable package fails closed. Forks are excluded by both the delivery job condition and trusted Python provenance checks. Public CI image artifacts are accessible separately from GHCR; no credentials belong in those images. See [publication checks and limits](public-release.md).
+
+API forwards bind only to `127.0.0.1`. Separate databases and storage have been verified; enforced network isolation between namespaces is not implemented.
+
+## Which PRs get an environment
+
+Open or update an owner-authored PR from a branch inside `HickoDev/PreviewForge`. **Demo CI** currently watches `previewforge-demo/**`, `compose.yaml`, `scripts/ci.py` and `.github/workflows/demo-ci.yml`. A documentation-only PR does not trigger a new application image or preview. Forks and PRs from other authors do not receive environments under the current trust policy.
+
+Follow the PR's **Demo CI** check, then the separate **Deliver approved demo image** run in the Actions tab. Delivery must complete before its desired record is available. With the laptop watcher running, use `previews.py status --github` and the forward command above. Check `/version` for the expected environment and successful source build; a green CI check alone does not prove local readiness.
+
+Two active PRs use two foreground forwards on different ports. See [the two-preview commands](resources.md#start-the-configured-laptop) and [the testing guide](testing.md) for task, export and monitoring checks. A preview URL is a local address, not an automatically published website.
 
 See [Milestone 3 results](results/milestone-3.md) for acceptance evidence. GitHub documents [container authentication and publication](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) and [package permissions](https://docs.github.com/en/packages/learn-github-packages/about-permissions-for-github-packages).
