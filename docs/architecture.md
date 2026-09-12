@@ -2,27 +2,25 @@
 
 ## Current platform overview
 
-![PreviewForge architecture: GitHub delivery, local kind environments, Floci exports, monitoring and scoped NVIDIA diagnostics](diagrams/previewforge-architecture-overview.svg)
+![PreviewForge architecture: GitHub delivery, local kind environments, Floci exports, monitoring and scoped NVIDIA diagnostics](diagrams/previewforge-architecture-overview.png)
 
 [Edit the draw.io source](diagrams/previewforge-architecture.drawio) · [Download the three-page PDF](diagrams/previewforge-architecture.pdf) · [Open the overview PNG](diagrams/previewforge-architecture-overview.png)
 
-The native draw.io document contains three pages: platform overview, PR delivery and cleanup, and application runtime with exports and diagnostics. It includes the technology logos and native Kubernetes/AWS resource symbols; shapes, labels, groups and connectors are editable. The SVG, PNG and PDF files were exported with the installed draw.io Desktop application. See the [diagram index, reusable symbol library and export commands](diagrams/README.md).
+The three PNG previews on this page are the latest draw.io exports, in the same order as the PDF: platform overview, PR delivery and cleanup, and application runtime with exports and diagnostics. The native document includes technology logos and Kubernetes/AWS resource symbols; shapes, labels, groups and connectors are editable. See the [diagram index, reusable symbol library and export commands](diagrams/README.md).
 
 The diagrams show the configured GitHub delivery mode across all six milestones. Source repository visibility can be private or public; the GHCR package stays private. PR numbers 123 and 124 are examples; their URLs require active local port-forwards. Floci runs beside kind in Docker. The local watcher owns Terraform and namespace preparation; Argo CD owns workload reconciliation. Hosted NVIDIA inference requires explicit opt-in; mock mode is the default. The diagrams describe the architecture, not additional test results or production isolation guarantees.
 
+### PR delivery and cleanup diagram
+
+![PR delivery and cleanup: validated builds, private images, GitOps records, preview creation and ordered removal](diagrams/previewforge-architecture-delivery.png)
+
+### Runtime, exports and diagnostics diagram
+
+![Application runtime: isolated PostgreSQL, export outbox and worker, Floci S3/SQS, monitoring and scoped diagnostics](diagrams/previewforge-architecture-runtime.png)
+
 ## Original Compose baseline
 
-```mermaid
-flowchart LR
-  Browser[Host browser / HTTP client] -->|127.0.0.1:8000| API[FastAPI container]
-  API --> DB[(PostgreSQL volume)]
-  Migrate[One-shot Alembic migration] --> DB
-  HostSmoke[Host boto3 smoke client] -->|127.0.0.1:4566| Floci[Floci: S3 / SQS]
-  ContainerSmoke[Smoke client inside API container] -->|floci:4566| Floci
-  Floci --> Storage[(Floci volume)]
-```
-
-This diagram shows the original Compose baseline, which keeps exports disabled. The configured Kubernetes installation now uses S3/SQS for task exports. With exports enabled, API readiness includes the database, report bucket and queue. See [the export sequence and controller ownership](resources.md).
+The original Compose baseline keeps exports disabled. The configured Kubernetes installation now uses S3/SQS for task exports. With exports enabled, API readiness includes the database, report bucket and queue. See [the export sequence and controller ownership](resources.md).
 
 ## Ownership
 
@@ -63,20 +61,6 @@ Milestone 1 supplied the metrics endpoint. Milestone 4 added the tested Promethe
 
 ## Milestone 2: Git drives persistent staging
 
-```mermaid
-flowchart LR
-  Source[Local source commit] --> Build[Build and load immutable image into kind]
-  Build --> Config[Local deployment-config commit]
-  Config --> Git[Read-only local Git daemon]
-  Git --> Argo[Argo CD polls Git]
-  Argo --> Helm[Render Helm chart]
-  Helm --> DB2[PostgreSQL StatefulSet and retained PVC]
-  DB2 --> Migration[Migration Job]
-  Migration --> API2[API Deployment and ClusterIP Service]
-  Browser2[Host browser] -->|loopback port-forward 18000| API2
-  API2 --> DB2
-```
-
 The two local commits have different purposes: the source commit identifies the bytes built into the image; the configuration commit selects that image by its imported containerd manifest digest. `/version` reads the source SHA baked into the image. Argo CD owns application reconciliation, including automatic repair of live drift; bootstrap does not run `helm install` for the demo or compete with Argo for its workloads.
 
 The chart orders database readiness, schema migration and API rollout. Staging has its own real PostgreSQL instance, synthetic records, resource quota and retained volume. Ordinary application deletion preserves staging; deleting the kind node still removes its local storage, so retention is not a backup.
@@ -102,7 +86,7 @@ Milestone 6 adds an independent trusted assistant in `previewforge-ai`. Argo CD 
 
 Compose and Dockerfile pin tested image digests. `pyproject.toml` pins direct packages; `requirements.lock` and `requirements-test.lock` lock transitive packages and hashes for Python 3.12 on Windows/Linux. They were generated with uv 0.12.12:
 
-```powershell
+```text
 # From previewforge-demo/, using an isolated uv 0.12.12 installation.
 uv pip compile pyproject.toml --universal --generate-hashes --output-file requirements.lock
 uv pip compile pyproject.toml --extra test --universal --generate-hashes --output-file requirements-test.lock

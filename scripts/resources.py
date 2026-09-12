@@ -131,7 +131,7 @@ def may_delete(name):
 
 
 def run_resources(action, records=None):
-    """Called by the existing watcher; keep its Windows/stdlib runtime unchanged."""
+    """Called by the existing watcher; keep its stdlib command process separate from Terraform dependencies."""
     result = subprocess.run(
         [str(r.PYTHON), str(Path(__file__).resolve()), "internal", "--github", "--phase", action],
         input=json.dumps(records or {}),
@@ -205,7 +205,7 @@ def main():
         with r.lock(r.RUNTIME / "setup.lock"):
             r.install()
     r.require(r.PYTHON.exists() and r.TF.exists(), "Run resources.py up --github first")
-    if Path(sys.executable).resolve() != r.PYTHON.resolve():
+    if Path(sys.prefix).resolve() != (r.TOOLS / "venv").resolve():
         raise SystemExit(
             subprocess.call([str(r.PYTHON), str(Path(__file__).resolve()), *sys.argv[1:]])
         )

@@ -1,12 +1,14 @@
 # Monitoring and recovery
 
+See [Windows/Linux prerequisites and runtime locations](installation.md) for `<installation-root>`. Commands use `python`; substitute `python3` on Linux if needed.
+
 Milestone 4 uses Prometheus 3.14.0, Grafana 13.2.1 and kube-state-metrics 2.20.0, pinned to registry digests in `observability/values.yaml`. A small Helm chart keeps the installed components and permissions visible. Argo CD owns the monitoring workloads/configuration; local bootstrap owns the namespace and generated Grafana credential.
 
-## Start on the configured Windows laptop
+## Start on the configured Windows or Linux host
 
-Start Docker Desktop. Stop an existing preview watcher with Ctrl+C, then run from PreviewForge:
+Start your local Docker daemon. Stop an existing preview watcher with Ctrl+C, then run from PreviewForge:
 
-```powershell
+```text
 python scripts/resources.py up --github
 python scripts/monitoring.py up
 python scripts/monitoring.py forward --service grafana
@@ -16,19 +18,19 @@ Open **http://127.0.0.1:13000/d/previewforge**. Choose staging or a running prev
 
 In another terminal, open Prometheus:
 
-```powershell
+```text
 python scripts/monitoring.py forward --service prometheus
 ```
 
 Use **http://127.0.0.1:19090/alerts** for pending/firing rules, or `/targets` for scrape health. Ctrl+C stops each forward. All Services are ClusterIP; these commands bind only to loopback. No email/chat receiver or public tunnel is configured. Stop/start of the retained kind node resumes monitoring; no reinstall is required.
 
-After setup, keep `python scripts/previews.py watch --github --apply` running in a separate terminal for ordinary real PR lifecycle operations. Stop that watcher before `monitoring.py up` or a monitoring exercise: they use the same local operation lock. Forwards and status checks can run alongside the watcher. Current startup restores Floci/export dependencies before API readiness; the older Milestone 4 `platform.ps1 start` alone cannot repair those dependencies.
+After setup, keep `python scripts/previews.py watch --github --apply` running in a separate terminal for ordinary real PR lifecycle operations. Stop that watcher before `monitoring.py up` or a monitoring exercise: they use the same local operation lock. Forwards and status checks can run alongside the watcher. Current startup restores Floci/export dependencies before API readiness; the older Milestone 4 `python scripts/platform_local.py start` alone cannot repair those dependencies.
 
 ## Repeatable exercises
 
 These commands deliberately change staging configuration in **real GitHub commits**, pause its database temporarily, and create/delete owned local preview fixtures. Use them when staging is available for a synthetic failure demonstration and no new application build is being delivered:
 
-```powershell
+```text
 python scripts/monitoring.py check
 python scripts/monitoring.py verify --allow-faults --allow-github-writes --trials 2
 ```
@@ -41,11 +43,11 @@ It also pauses automated sync, scales only staging's PostgreSQL to zero, generat
 
 If the process is forcibly interrupted, restore from its non-secret journal:
 
-```powershell
+```text
 python scripts/monitoring.py recover --allow-faults --allow-github-writes
 ```
 
-The journal and raw results are under `%LOCALAPPDATA%\PreviewForge\runtime\previewforge-m2\`. Recovery refuses to overwrite an unexpected newer staging image or delete an unmarked preview. Inspect such a conflict before retrying. Do not run Git/DB fault exercises concurrently with an application release. An ordinary run takes roughly 15 minutes on the tested laptop, including alert evaluation and cleanup waits; it is not a load benchmark.
+The journal and raw results are under `<installation-root>/runtime/previewforge-m2/`. Recovery refuses to overwrite an unexpected newer staging image or delete an unmarked preview. Inspect such a conflict before retrying. Do not run Git/DB fault exercises concurrently with an application release. An ordinary run takes roughly 15 minutes on the tested laptop, including alert evaluation and cleanup waits; it is not a load benchmark.
 
 ## Data and permission boundaries
 

@@ -19,8 +19,8 @@ OWNER = "previewforge-m5"
 BASE = Path(os.environ.get("PREVIEWFORGE_RUNTIME_DIR", str(p.RUNTIME.parent)))
 RUNTIME = BASE / OWNER
 TOOLS = p.TOOLS.parent / "milestone5"
-PYTHON = TOOLS / "venv/Scripts/python.exe"
-TF = TOOLS / "terraform.exe"
+PYTHON = p.host.venv_python(TOOLS / "venv")
+TF = TOOLS / p.host.executable("terraform")
 LOCK = json.loads((p.ROOT / "bootstrap/milestone5-tools.lock.json").read_text())
 FLOCI = "previewforge-m1-floci-1"
 NAMESPACE = "previewforge-system"
@@ -77,26 +77,17 @@ def settings(create=False):
 
 @contextlib.contextmanager
 def lock(path):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a+b") as stream:
-        stream.seek(0)
-        if sys.platform == "win32":
-            import msvcrt
-
-            msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
-        else:
-            import fcntl
-
-            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with p.host.lock(path):
         yield
 
 
 def install():
     validate_runtime()
-    require(sys.platform == "win32" and sys.version_info[:2] == (3, 12), "Use Windows Python 3.12")
+    p.host.require_supported()
+    p.host.private_directory(RUNTIME, p.ROOT)
     TOOLS.mkdir(parents=True, exist_ok=True)
     version = LOCK["terraform"]["version"]
-    filename = f"terraform_{version}_windows_amd64.zip"
+    filename = f"terraform_{version}_{p.host.platform_key().replace('-', '_')}.zip"
     archive = TOOLS / filename
     if (
         not archive.exists()
@@ -111,9 +102,10 @@ def install():
         "Terraform checksum mismatch",
     )
     with zipfile.ZipFile(archive) as source:
-        binary = source.read("terraform.exe")
+        binary = source.read(p.host.executable("terraform"))
         if not TF.exists() or TF.read_bytes() != binary:
             TF.write_bytes(binary)
+        TF.chmod(0o755)
     dependencies = p.ROOT / "previewforge-demo/requirements.lock"
     digest = hashlib.sha256(dependencies.read_bytes()).hexdigest()
     marker = TOOLS / "requirements.sha256"

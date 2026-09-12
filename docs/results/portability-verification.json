@@ -1,0 +1,220 @@
+{
+  "platformBaseCommit": "ca4a38d4db5bb358a4237018569e3823bba625dd",
+  "portabilityChangesUncommittedDuringRun": true,
+  "hosts": {
+    "windows": {
+      "python": "3.12.10",
+      "architecture": "x64",
+      "hostTestsPassed": 72,
+      "hostTestsSkipped": 1
+    },
+    "linux": {
+      "python": "3.12.13",
+      "architecture": "x86_64",
+      "distribution": "Debian 12 container",
+      "rootfulIsolatedDockerDaemon": true,
+      "hostTestsPassed": 73,
+      "hostTestsSkipped": 0
+    }
+  },
+  "dockerEngine": "29.4.1",
+  "dockerCompose": "5.1.3",
+  "composeApplicationTestsPerHost": {
+    "passed": 41,
+    "skippedExportCases": 5
+  },
+  "linuxCompleteApplicationTestsPassed": 46,
+  "linuxAssistantTestsPassed": 70,
+  "linuxPreviewLifecycle": {
+    "startedAt": "2026-09-11T23:01:38.598637+00:00",
+    "scope": "local kind/ApplicationSet + synthetic PR provider; no GitHub/GHCR delivery",
+    "checks": [
+      {
+        "name": "Application tests and platform regressions; staging baseline healthy",
+        "at": "2026-09-11T23:02:41.307587+00:00",
+        "stagingPvcUid": "bb2178e2-a820-4f66-b755-01da7c4a84b4"
+      },
+      {
+        "name": "Two simultaneous ApplicationSet previews, seeded isolated databases and distinct disposable PVs",
+        "at": "2026-09-11T23:03:29.556186+00:00",
+        "previewA": "preview-982799172",
+        "previewB": "preview-982799173"
+      },
+      {
+        "name": "PR A update changes its image/source only and retains both databases",
+        "at": "2026-09-11T23:04:02.669458+00:00",
+        "sourceA": "48e1c9d7f22c5a1a595ffeea3d5c7d525d26f1c8",
+        "sourceB": "02c101f3d1d0a0da849a3c6c67247695b6db5936"
+      },
+      {
+        "name": "Stale, failed and unpublished completions leave Git and the running preview unchanged",
+        "at": "2026-09-11T23:04:04.823720+00:00"
+      },
+      {
+        "name": "Closing A cascades workloads/PVC/PV then removes its namespace; B and staging survive; late completion rejected",
+        "at": "2026-09-11T23:04:26.764419+00:00"
+      },
+      {
+        "name": "Successful simulated main build deploys its own source SHA and retains staging PVC/tasks",
+        "at": "2026-09-11T23:05:12.302472+00:00",
+        "mainSource": "a44583e0c499c68f5f0dcd520ac011ce5a301385",
+        "mainDigest": "sha256:cbe8b67d125cb20031adeec09da9beeb605e0cbc3cb3ed275b9e65415403be55"
+      },
+      {
+        "name": "Missed-close reconciliation and resumed cleanup remove B fully; dry-run is read-only; staging stays functional",
+        "at": "2026-09-11T23:05:27.320871+00:00"
+      }
+    ],
+    "status": "passed",
+    "completedAt": "2026-09-11T23:05:27.434135+00:00"
+  },
+  "linuxRuntime": {
+    "startedAt": "2026-09-11T23:18:50.216418+00:00",
+    "checks": {
+      "curlTaskAndExportExamples": true,
+      "prometheusTargetsUp": 6,
+      "grafanaDashboard": true,
+      "assistantMockReady": true,
+      "assistantSecretReadDenied": true
+    },
+    "environments": {
+      "staging": {
+        "version": {
+          "source_sha": "8266a4ac0736af9c02f9c64ef1afb311f3e8c614",
+          "environment": "staging"
+        },
+        "taskId": "e5629ce1-e079-4384-ac38-a33f4f14f15d",
+        "exportId": "54fca6b3-ab2f-46a2-8235-0c2fbccf0e2e",
+        "pvcUid": "bb2178e2-a820-4f66-b755-01da7c4a84b4",
+        "resources": {
+          "bucket": "previewforge-staging-reports",
+          "queue": "http://127.0.0.1:4566/000000000000/previewforge-staging-exports"
+        }
+      },
+      "preview-11": {
+        "version": {
+          "source_sha": "cb5a8eb30416ba6f68c12dfe76f2c1b554132fc3",
+          "environment": "preview-11"
+        },
+        "taskId": "947b87a7-685f-4538-b5d6-b121c4aa73af",
+        "exportId": "d7a8871b-c009-40d8-a91a-86216b5ec14f",
+        "pvcUid": "5378dadb-7735-4210-a386-16cad7722825",
+        "resources": {
+          "bucket": "previewforge-preview-11-reports",
+          "queue": "http://127.0.0.1:4566/000000000000/previewforge-preview-11-exports"
+        }
+      },
+      "preview-12": {
+        "version": {
+          "source_sha": "b5dbd691bde296966f741e7233569fff4792ac97",
+          "environment": "preview-12"
+        },
+        "taskId": "2f2a8809-dba2-4a32-9d7e-2520f88434f8",
+        "exportId": "8c6bac29-c50b-45d2-9285-e9b199af475f",
+        "pvcUid": "0860ff0c-2153-43e7-a7c6-de3020498660",
+        "resources": {
+          "bucket": "previewforge-preview-12-reports",
+          "queue": "http://127.0.0.1:4566/000000000000/previewforge-preview-12-exports"
+        }
+      }
+    },
+    "completedAt": "2026-09-11T23:19:43.600045+00:00",
+    "passed": true
+  },
+  "linuxMockEvaluation": {
+    "completed_cases": 13,
+    "matched_expected": 13,
+    "valid_references": 13,
+    "abstentions": 4,
+    "attempts": 0,
+    "unsupported_statements": 0,
+    "human_review_pending": false
+  },
+  "linuxRestart": {
+    "startup": {
+      "startedAt": "2026-09-11T23:19:43.967201+00:00",
+      "startupSeconds": 63.68,
+      "completedAt": "2026-09-11T23:21:34.189799+00:00",
+      "passed": true,
+      "stagingPvcUid": "bb2178e2-a820-4f66-b755-01da7c4a84b4",
+      "monitoringPvcUids": {
+        "previewforge-prometheus": "e5a71e46-5791-434b-a95f-ef3f72588d63"
+      },
+      "taskCount": 2,
+      "exportId": "e1f51523-282f-4f1d-9e13-083b98475003",
+      "reportSha256": "d8a8b4cbf08a54563cbd15838d85870629ebcafd2089da095e8e935691bc5a27",
+      "reportRebuilt": false,
+      "containersPreserved": true
+    },
+    "applications": [
+      {
+        "name": "observability",
+        "sync": "Synced",
+        "health": "Healthy"
+      },
+      {
+        "name": "preview-11",
+        "sync": "Synced",
+        "health": "Healthy"
+      },
+      {
+        "name": "preview-12",
+        "sync": "Synced",
+        "health": "Healthy"
+      },
+      {
+        "name": "previewforge-assistant",
+        "sync": "Synced",
+        "health": "Healthy"
+      },
+      {
+        "name": "staging",
+        "sync": "Synced",
+        "health": "Healthy"
+      }
+    ]
+  },
+  "diagramExports": {
+    "pages": 3,
+    "pngWidth": 2882,
+    "svgEmbeddedSourcesMatch": true,
+    "pdfEmbeddedSourceMatches": true,
+    "overviewVisualReview": "passed",
+    "deliveryVisualReview": "passed"
+  },
+  "cleanup": {
+    "containersRemoved": [
+      "previewforge-linux-control",
+      "previewforge-linux-engine"
+    ],
+    "volumesRemoved": [
+      "previewforge-linux-work",
+      "previewforge-linux-runtime",
+      "previewforge-linux-socket",
+      "previewforge-linux-data"
+    ],
+    "ownershipLabelsVerified": true,
+    "copiedCredentialsRemovedWithDisposableInstallation": true
+  },
+  "githubWorkflowRun": "not run; changes not pushed",
+  "githubWrites": false,
+  "hostedInferenceCalls": 0,
+  "realCloudResources": false,
+  "scope": "Observed Windows and isolated Linux acceptance; not every Linux distribution/user configuration or hosted AI evaluation.",
+  "documentationChecks": {
+    "markdown_files": 31,
+    "local_links_checked": 178,
+    "anchors_checked": 23,
+    "external_links_not_checked": 83,
+    "python_commands_parsed": 64,
+    "cli_help_checks": 9
+  },
+  "staticChecks": {
+    "ruff": "passed",
+    "actionlint": "passed",
+    "gitDiffWhitespace": "passed",
+    "secretScan": "existing synthetic canary only",
+    "powershellBlocksParsed": 6,
+    "bashBlocksParsed": 3
+  }
+}

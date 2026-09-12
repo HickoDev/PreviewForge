@@ -12,56 +12,56 @@ The demo application lives in `previewforge-demo/` with its own dependencies, te
 
 The Compose demo below runs independently. Full platform automation is intentionally bound to **HickoDev/PreviewForge** and the **HickoDev** account. A fork does not automatically deploy or receive credentials; adapting the owner/repository checks requires a separate configuration review. The current delivery policy accepts only the owner's same-repository application PRs.
 
-## Run on Windows
+## Run on Windows or Linux
 
-Prerequisites: Windows PowerShell 5.1+, Git, and running Docker Desktop with Linux containers/WSL2 and Docker Compose v2.20+ (v5 works). Python **3.12** is additionally needed for the full verification command. First builds need internet access for the pinned public images and packages.
+Prerequisites: **Python 3.12**, Git, a local Docker daemon running Linux containers, and Docker Compose **2.24.4+** (v5 works). Windows uses Docker Desktop/WSL2; Linux uses Docker Engine. See [OS-specific installation and support](docs/installation.md). On Linux, use `python3` if `python` is unavailable. First builds need internet access for pinned public images and packages.
 
 From this repository root:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev.ps1 up
+```text
+python scripts/dev.py up
 ```
 
 Open [API documentation](http://127.0.0.1:8000/docs), [readiness](http://127.0.0.1:8000/health/ready), [version](http://127.0.0.1:8000/version) or [metrics](http://127.0.0.1:8000/metrics). Only loopback ports 8000 and 4566 are published; PostgreSQL has no host port.
 
-```powershell
+```text
 # Generate three synthetic example tasks (safe to repeat).
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev.ps1 seed
+python scripts/dev.py seed
 
 # Lint, unit tests and isolated PostgreSQL integration tests.
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev.ps1 test
+python scripts/dev.py test
 
 # Full acceptance: tests, host/container Floci, HTTP, persistence and DB outage/recovery.
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev.ps1 verify
+python scripts/dev.py verify
 
 # Stop this project's containers; retain its PostgreSQL and Floci volumes.
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev.ps1 down
+python scripts/dev.py down
 ```
 
-The wrapper generates a database password under `%LOCALAPPDATA%\PreviewForge\runtime\previewforge-m1\`, outside Git and OneDrive, and mounts it using Compose secrets. It does not read your AWS profiles. Both Floci smoke clients explicitly use `test` credentials, `us-east-1` and an approved local endpoint.
+The command generates a database password in the private host runtime and mounts it using Compose secrets. Windows retains `%LOCALAPPDATA%\PreviewForge\runtime\previewforge-m1\`; Linux uses `${XDG_STATE_HOME:-$HOME/.local/state}/previewforge/runtime/previewforge-m1`. It does not read your AWS profiles. Both Floci smoke clients explicitly use `test` credentials, `us-east-1` and an approved local endpoint.
 
-See [setup and API examples](docs/setup.md), [architecture and decisions](docs/architecture.md) and [Milestone 1 review and verification results](docs/results/milestone-1-review.md).
+See [setup and API examples](docs/setup.md), [architecture and decisions](docs/architecture.md), and [Windows/Linux verification results](docs/results/portability.md).
 
 ## Local Kubernetes staging (initial local mode)
 
 This section is for the local Git fixture. If GitHub/GHCR delivery is already configured, use [Real PR environments](#real-pr-environments) below; local bootstrap refuses to replace that installation's Git source.
 
-With Python 3.12, Docker Desktop and Git available, run:
+With the [host prerequisites](docs/installation.md) available, run:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 up
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 forward
+```text
+python scripts/platform_local.py up
+python scripts/platform_local.py forward
 ```
 
 Open [staging API documentation](http://127.0.0.1:18000/docs). The first command installs pinned tools locally and waits for Argo CD to synchronize staging. The second keeps a loopback port-forward open; Ctrl+C closes it. GitHub downloads use `gh` only after verifying the active account is HickoDev. The separate kubeconfig and database password stay outside Git/OneDrive.
 
-```powershell
+```text
 # Real local Git commits, immutable image rollout, drift repair and failure recovery.
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 verify
+python scripts/platform_local.py verify
 
 # Inspect, or stop while retaining the cluster and its data.
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 status
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 stop
+python scripts/platform_local.py status
+python scripts/platform_local.py stop
 ```
 
 See [Kubernetes setup, ownership and demo instructions](docs/kubernetes.md) and [Milestone 2 review and results](docs/results/milestone-2-review.md). This uses a read-only local Git fixture and locally loaded application images. For the configured GitHub/GHCR mode, use the resume commands below instead of local `up` or `verify`. The Milestone 1 Compose stack can run alongside staging and continues to own Floci.
@@ -70,18 +70,18 @@ See [Kubernetes setup, ownership and demo instructions](docs/kubernetes.md) and 
 
 Milestone 3 connects real GitHub PRs and private GHCR images to local Argo CD previews. See [GitHub-mode startup and recovery](docs/remote.md), [local simulation](docs/previews.md), and [acceptance results](docs/results/milestone-3.md).
 
-On the configured laptop, with Docker Desktop running:
+On the configured owner installation, with Docker running:
 
-```powershell
+```text
 python scripts/resources.py up --github
 python scripts/previews.py watch --github --apply
 ```
 
 Keep that terminal running. In another terminal:
 
-```powershell
+```text
 python scripts/previews.py status --github
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 forward
+python scripts/platform_local.py forward
 ```
 
 Open `http://127.0.0.1:18000/docs` for staging. Forward an active PR with `python scripts/previews.py forward --github --pr 123 --port 18042`, replacing `123` with its PR number. The two acceptance PRs are closed after verification.
@@ -90,7 +90,7 @@ Open `http://127.0.0.1:18000/docs` for staging. Forward an active PR with `pytho
 
 With the configured cluster running, open the environment dashboard. Stop the preview watcher with Ctrl+C before `monitoring.py up`, because both commands use the same operation lock. Restart the watcher in its own terminal after setup:
 
-```powershell
+```text
 python scripts/monitoring.py up
 python scripts/monitoring.py forward --service grafana
 ```
@@ -109,7 +109,7 @@ See [startup, report commands and recovery](docs/resources.md) and [Milestone 5 
 
 Milestone 6 adds a separate, read-only diagnostic API. It collects bounded evidence from approved environments, correlates the deployed image and configuration, and returns cited facts, hypotheses or an explicit abstention. Mock mode works without a key:
 
-```powershell
+```text
 python scripts/assistant.py up
 python scripts/assistant.py diagnose --fixture wrong-port
 python scripts/assistant.py diagnose --environment staging

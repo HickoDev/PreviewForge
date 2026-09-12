@@ -1,14 +1,16 @@
 # Milestone 3: preview lifecycle
 
+See [Windows/Linux prerequisites and runtime locations](installation.md) for `<installation-root>`. Commands use `python`; substitute `python3` on Linux if needed.
+
 The local implementation runs real ApplicationSet-generated applications on kind. GitHub PR events and successful publication are represented by a synthetic provider in local mode. Real GitHub Actions/GHCR delivery is also activated. Use [GitHub-mode startup](remote.md) on the configured laptop; the commands below describe the separate local simulation.
 
 The demo stays in `previewforge-demo/` inside `HickoDev/PreviewForge`. Application inputs and deployment records have separate paths and ownership. No second remote repository is required. The CI path filter excludes `gitops/`, preventing configuration commits from starting another image build.
 
 ## Run the local demonstration
 
-Use the same Windows/Python 3.12/Docker Desktop/Git prerequisites as [Milestone 2](kubernetes.md). From the repository root:
+Use the same host/Python 3.12/Docker/Git prerequisites as [Milestone 2](kubernetes.md). From the repository root:
 
-```powershell
+```text
 # Bootstrap kind, staging and the preview ApplicationSet.
 python scripts/previews.py up
 
@@ -16,11 +18,11 @@ python scripts/previews.py up
 python scripts/previews.py verify
 ```
 
-`verify` needs no existing active local previews. It creates two randomly numbered synthetic previews, builds and loads immutable images, checks real HTTP responses and PostgreSQL data, and removes those previews afterward. It leaves staging on a new synthetic main-source revision, preserving its existing PVC and tasks. The result is saved outside Git at `%LOCALAPPDATA%\PreviewForge\runtime\previewforge-m2\milestone-3-verification.json`.
+`verify` needs no existing active local previews. It creates two randomly numbered synthetic previews, builds and loads immutable images, checks real HTTP responses and PostgreSQL data, and removes those previews afterward. It leaves staging on a new synthetic main-source revision, preserving its existing PVC and tasks. The result is saved outside Git at `<installation-root>/runtime/previewforge-m2/milestone-3-verification.json`.
 
 For an interactive example:
 
-```powershell
+```text
 # Test the current app, build/load its image, and open/update synthetic PR 42.
 python scripts/previews.py demo --pr 42
 python scripts/previews.py forward --pr 42 --port 18042
@@ -28,7 +30,7 @@ python scripts/previews.py forward --pr 42 --port 18042
 
 While forwarding, open `http://127.0.0.1:18042/docs`. Ctrl+C closes only the forward. In another terminal, `demo --pr 43` creates a second preview; forward it on `18043`. These numbers are local fixtures, not requests to open GitHub PRs.
 
-```powershell
+```text
 python scripts/previews.py status
 python scripts/previews.py close --pr 42
 python scripts/previews.py close --pr 43
@@ -79,17 +81,17 @@ The owner explicitly approved workflow publication, GHCR image publication and c
 Activation uses these steps:
 
 1. Push the reviewed workflows and enable the writing-workflow variable. Run CI and validate the actual artifact/run metadata and GHCR digest using real trusted PRs. Verify the private package's repository association with the owner's pull credential and set its non-secret ID as `PREVIEWFORGE_PACKAGE_ID`; Actions can omit that association from its own API response.
-2. Configure a repository-only read-only SSH deploy key for Argo. Its private key stays outside Git and in the `argocd` namespace. GitHub host keys come from the authenticated GitHub metadata API. Separately create a HickoDev classic PAT with **only** `read:packages`, then run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-registry.ps1`. The hidden prompt verifies the token's account and minimal scope before placing it in the local registry Secret. Never put token values in chat, shell arguments or Git. The normal `gh` account/scopes are unchanged.
+2. Configure a repository-only read-only SSH deploy key for Argo. Its private key stays outside Git and in the `argocd` namespace. GitHub host keys come from the authenticated GitHub metadata API. Separately create a HickoDev classic PAT with **only** `read:packages`, then run `python scripts/configure_remote.py registry`. The hidden prompt verifies the token's account and minimal scope before placing it in the local registry Secret. Never put token values in chat, shell arguments or Git. The normal `gh` account/scopes are unchanged.
 3. Create a `kubernetes.io/dockerconfigjson` Secret named `previewforge-ghcr` in `argocd`, labeled `previewforge.io/owner=previewforge-m3`. The local reconciler copies only that registry Secret to staging and desired preview namespaces. API credentials remain namespace-local. Argo's Git repository credential stays in `argocd` and is never copied to previews.
 4. Review the generated remote manifests, then apply them only after the first successful main record exists. Rendering itself performs no GitHub or cluster write:
 
-```powershell
+```text
 python scripts/previews.py render-remote
 ```
 
 The rendered configuration keeps the chart/project/cluster fixed, switches Git to `HickoDev/PreviewForge`, and references the registry pull Secret. Once configured remotely:
 
-```powershell
+```text
 python scripts/previews.py reconcile --github             # dry run
 python scripts/previews.py watch --github --apply         # keep this foreground loop running
 python scripts/previews.py forward --github --pr 42 --port 18042
@@ -99,7 +101,7 @@ The watcher polls read-only GitHub APIs through guarded `gh`; Argo independently
 
 ## Checks and sources
 
-```powershell
+```text
 python -m unittest discover -s tests/platform -v
 python scripts/ci.py test
 python scripts/previews.py verify

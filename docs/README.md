@@ -2,6 +2,8 @@
 
 PreviewForge creates local Kubernetes test environments for trusted application PRs. Start with the [project overview](../README.md), then choose the guide that matches your installation.
 
+Check [Windows/Linux prerequisites and runtime locations](installation.md). The same Python entry points run on both supported hosts; macOS and ARM are not yet supported.
+
 ## Choose a starting point
 
 | What you want to do | Start here | Scope |
@@ -12,7 +14,7 @@ PreviewForge creates local Kubernetes test environments for trusted application 
 | Check an application or the platform | [Testing guide](testing.md) | Interactive checks, isolated suites and explicitly disruptive exercises |
 | Understand the components and flows | [Architecture](architecture.md) | Ownership, deployment identities, local/cloud boundaries and editable diagrams |
 
-All commands assume the repository root unless a guide says otherwise. The full platform scripts are bound to **HickoDev/PreviewForge** and verify **HickoDev** before laptop GitHub operations. A fork does not automatically get remote previews. The configured-laptop runbook is a resume procedure; a complete fresh-laptop remote setup and lost-node recovery have not been verified.
+All commands assume the repository root unless a guide says otherwise. The full platform scripts are bound to **HickoDev/PreviewForge** and verify **HickoDev** before host GitHub operations. A fork does not automatically get remote previews. The configured-laptop runbook is a resume procedure; a complete fresh-laptop remote setup and lost-node recovery have not been verified.
 
 ## Component guides
 
@@ -28,7 +30,7 @@ Ordinary setup commands can share an operation lock with the preview watcher. Fo
 
 ## Read the verification evidence
 
-The [README checklist](../README.md#implementation-and-verification-checklist) tracks implementation and acceptance. Detailed reports record the result at the time of each milestone:
+The [README checklist](../README.md#implementation-and-verification-checklist) tracks implementation and acceptance. The [Windows/Linux portability report](results/portability.md) records the current host verification. Detailed reports below record the result at the time of each milestone:
 
 | Milestone | Recorded evidence |
 | --- | --- |

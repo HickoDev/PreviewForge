@@ -50,7 +50,7 @@ def forward(service="prometheus", port=19090):
     with path.open("w") as log:
         process = subprocess.Popen(
             [
-                str(p.TOOLS / "kubectl.exe"),
+                str(p.TOOLS / p.host.executable("kubectl")),
                 "--kubeconfig",
                 str(p.KUBECONFIG),
                 "--context",
@@ -65,7 +65,7 @@ def forward(service="prometheus", port=19090):
             ],
             stdout=log,
             stderr=log,
-            creationflags=subprocess.CREATE_NO_WINDOW,
+            **p.host.background_options(),
         )
         try:
 
@@ -152,7 +152,7 @@ def up():
 
 
 def check():
-    helm = shutil.which("helm") or str(p.TOOLS / "helm.exe")
+    helm = shutil.which("helm") or str(p.TOOLS / p.host.executable("helm"))
     p.run(helm, "lint", CHART, "--namespace", NAMESPACE)
     p.run(helm, "template", "monitoring", CHART, "--namespace", NAMESPACE, quiet=True)
     for args in (
@@ -212,11 +212,9 @@ def main():
         p.k("-n", "argocd", "get", "application", "observability")
         p.k("-n", NAMESPACE, "get", "pods,services,pvc")
         return
-    import msvcrt
-
-    with (p.RUNTIME / "operation.lock").open("a+b") as lock:
-        lock.seek(0)
-        msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+    p.host.require_supported()
+    p.host.private_directory(p.RUNTIME, p.ROOT)
+    with p.host.lock(p.RUNTIME / "operation.lock"):
         if args.action == "up":
             up()
         else:

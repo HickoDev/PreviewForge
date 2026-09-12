@@ -7,7 +7,7 @@ $pfSecureToken = Read-Host 'GHCR read-only token (hidden)' -AsSecureString
 $pfTokenPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($pfSecureToken)
 try {
     $pfPlainToken = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($pfTokenPointer)
-    $pfPlainToken | & python (Join-Path $PSScriptRoot 'configure_remote.py') registry
+    $pfPlainToken | & python (Join-Path $PSScriptRoot 'configure_remote.py') registry --stdin
     if ($LASTEXITCODE -ne 0) { throw 'Private registry configuration failed.' }
 } finally {
     $pfPlainToken = $null

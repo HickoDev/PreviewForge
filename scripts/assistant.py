@@ -2,18 +2,14 @@
 
 import argparse
 import base64
-import getpass
 import hashlib
 import json
-import os
 import re
 import secrets
-import subprocess
 import sys
 import urllib.error
 import urllib.request
 from contextlib import contextmanager
-from pathlib import Path
 
 import platform_local as p
 import previews as v
@@ -21,7 +17,7 @@ import previews as v
 OWNER = "previewforge-m6"
 NAMESPACE = "previewforge-ai"
 NAME = "previewforge-assistant"
-RUNTIME = Path(os.environ.get("LOCALAPPDATA", "")) / "PreviewForge/runtime" / OWNER
+RUNTIME = p.host.home() / "runtime" / OWNER
 POLICY = RUNTIME / "policy.json"
 IMAGE = "docker.io/previewforge/assistant"
 SHA = re.compile(r"^[a-f0-9]{40}$")
@@ -29,50 +25,16 @@ ENVIRONMENT = re.compile(r"^(staging|preview-[1-9][0-9]{0,8})$")
 
 
 def runtime():
-    path = RUNTIME.resolve()
-    if (
-        not os.environ.get("LOCALAPPDATA")
-        or "onedrive" in str(path).lower()
-        or path.is_relative_to(p.ROOT)
-        or path.name != OWNER
-    ):
-        raise ValueError("Assistant runtime must be outside Git and OneDrive")
-    path.mkdir(parents=True, exist_ok=True)
-    if os.name == "nt":
-        user = p.run("whoami", quiet=True)
-        result = subprocess.run(
-            [
-                "icacls",
-                str(path),
-                "/inheritance:r",
-                "/grant:r",
-                user + ":(OI)(CI)F",
-                "SYSTEM:(OI)(CI)F",
-            ],
-            capture_output=True,
-        )
-        if result.returncode:
-            raise RuntimeError("Could not restrict the private runtime directory permissions")
-    return path
+    p.host.require_supported()
+    if RUNTIME.name != OWNER:
+        raise ValueError("Assistant runtime has an unexpected owner")
+    return p.host.private_directory(RUNTIME, p.ROOT)
 
 
 @contextmanager
 def exercise_lock():
-    import msvcrt
-
-    with (p.RUNTIME / "operation.lock").open("a+b") as lock:
-        lock.seek(0)
-        try:
-            msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
-        except OSError:
-            raise ValueError(
-                "Stop the preview watcher or other platform exercise before verification"
-            ) from None
-        try:
-            yield
-        finally:
-            lock.seek(0)
-            msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+    with p.host.lock(p.RUNTIME / "operation.lock"):
+        yield
 
 
 def owned(kind, name, namespace=NAMESPACE):
@@ -265,7 +227,7 @@ def build_image():
         quiet=True,
     )
     p.run(
-        p.TOOLS / "kind.exe",
+        p.TOOLS / p.host.executable("kind"),
         "load",
         "docker-image",
         "--name",
@@ -327,7 +289,7 @@ def up(live=False, model="nvidia/nemotron-3-super-120b-a12b", local_chart=False)
         for name, value in values.items():
             args.extend(["--set", name + "=" + value])
         rendered = p.run(
-            p.TOOLS / "helm.exe",
+            p.TOOLS / p.host.executable("helm"),
             "template",
             "assistant",
             p.ROOT / "charts/ai-assistant",
@@ -449,7 +411,7 @@ def configure_key():
     # getpass refuses chat/argv input. A key is never written to a local env file.
     if not sys.stdin.isatty():
         raise ValueError("Run this command yourself in an interactive terminal")
-    key = getpass.getpass(
+    key = p.host.hidden_prompt(
         "NVIDIA API key (hidden; stored only in the trusted local Kubernetes Secret): "
     ).strip()
     if not key or len(key) > 2048 or re.search(r"\s", key):

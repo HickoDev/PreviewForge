@@ -24,7 +24,7 @@ class AssistantBoundaries(unittest.TestCase):
             patch.object(a, "ensure_namespace"),
             patch.object(a, "owned"),
             patch.object(a.sys.stdin, "isatty", return_value=True),
-            patch.object(a.getpass, "getpass", return_value=marker),
+            patch.object(a.p.host, "hidden_prompt", return_value=marker),
             patch.object(a.p, "k") as kube,
             redirect_stdout(output),
         ):
@@ -43,7 +43,7 @@ class AssistantBoundaries(unittest.TestCase):
             patch.object(a, "runtime"),
             patch.object(a, "ensure_namespace"),
             patch.object(a.sys.stdin, "isatty", return_value=False),
-            patch.object(a.getpass, "getpass") as prompt,
+            patch.object(a.p.host, "hidden_prompt") as prompt,
         ):
             with self.assertRaises(ValueError):
                 a.configure_key()

@@ -1,17 +1,17 @@
-"""Windows-only, local Milestone 2 bootstrap; no remote writes or cloud clients."""
+"""Windows/Linux local Kubernetes bootstrap; no remote writes or cloud clients."""
 
 import argparse
 import base64
 import contextlib
 import hashlib
 import json
-import os
 import re
 import secrets
 import shutil
 import socket
 import subprocess
 import sys
+import tarfile
 import time
 import urllib.error
 import urllib.request
@@ -19,14 +19,16 @@ import zipfile
 from http.client import HTTPException
 from pathlib import Path
 
+import host
+
 ROOT = Path(__file__).resolve().parents[1]
 GITHUB_COMMIT_IDENTITY = {
     "name": "HickoDev",
     "email": "157824011+HickoDev@users.noreply.github.com",
 }
 OWNER = "previewforge-m2"
-RUNTIME = Path(os.environ.get("LOCALAPPDATA", "")) / "PreviewForge/runtime" / OWNER
-TOOLS = Path(os.environ.get("LOCALAPPDATA", "")) / "PreviewForge/tools/milestone2"
+RUNTIME = host.home() / "runtime" / OWNER
+TOOLS = host.home() / "tools/milestone2"
 KUBECONFIG = RUNTIME / "kubeconfig"
 SOURCE = RUNTIME / "source"
 BARE = RUNTIME / "git/previewforge.git"
@@ -61,9 +63,11 @@ def run(*args, cwd=None, input=None, timeout=300, quiet=False, sensitive=False):
 
 def gh(*args):
     # Account checks precede every GitHub operation, including upstream downloads.
-    auth = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True)
+    auth = subprocess.run(
+        ["gh", "auth", "status", "--hostname", "github.com"], capture_output=True, text=True
+    )
     if auth.returncode or not re.search(
-        r"account HickoDev \(keyring\)\s+- Active account: true",
+        r"account HickoDev \([^\r\n]+\)\s+- Active account: true",
         auth.stdout + auth.stderr,
     ):
         raise RuntimeError("GitHub downloads require the active gh account HickoDev.")
@@ -80,11 +84,14 @@ def checked_download(path, expected, fetch):
 
 
 def install_tools():
+    host.require_supported()
+    key = host.platform_key()
     TOOLS.mkdir(parents=True, exist_ok=True)
-    kind_download = TOOLS / "kind-windows-amd64"
+    spec = LOCK["kind"]["platforms"][key]
+    kind_download = TOOLS / spec["asset"]
     if (
         not kind_download.exists()
-        or hashlib.sha256(kind_download.read_bytes()).hexdigest() != LOCK["kind"]["sha256"]
+        or hashlib.sha256(kind_download.read_bytes()).hexdigest() != spec["sha256"]
     ):
         gh(
             "release",
@@ -93,23 +100,33 @@ def install_tools():
             "--repo",
             "kubernetes-sigs/kind",
             "--pattern",
-            "kind-windows-amd64",
+            spec["asset"],
             "--dir",
             TOOLS,
             "--clobber",
         )
-    if hashlib.sha256(kind_download.read_bytes()).hexdigest() != LOCK["kind"]["sha256"]:
+    if hashlib.sha256(kind_download.read_bytes()).hexdigest() != spec["sha256"]:
         raise RuntimeError("kind checksum mismatch")
-    shutil.copyfile(kind_download, TOOLS / "kind.exe")
-    for name, filename in [("helm", "helm.zip"), ("kubectl", "kubectl.exe")]:
-        spec = LOCK[name]
+    destination = TOOLS / host.executable("kind")
+    shutil.copyfile(kind_download, destination)
+    destination.chmod(0o755)
+    archive_name = "helm.zip" if sys.platform == "win32" else "helm.tar.gz"
+    for name, filename in [("helm", archive_name), ("kubectl", host.executable("kubectl"))]:
+        spec = LOCK[name]["platforms"][key]
         checked_download(
             TOOLS / filename,
             spec["sha256"],
             lambda spec=spec: urllib.request.urlopen(spec["url"], timeout=120).read(),
         )
-    with zipfile.ZipFile(TOOLS / "helm.zip") as archive:
-        (TOOLS / "helm.exe").write_bytes(archive.read("windows-amd64/helm.exe"))
+    if sys.platform == "win32":
+        with zipfile.ZipFile(TOOLS / archive_name) as archive:
+            binary = archive.read("windows-amd64/helm.exe")
+    else:
+        with tarfile.open(TOOLS / archive_name, "r:gz") as archive:
+            binary = archive.extractfile("linux-amd64/helm").read()
+    (TOOLS / host.executable("helm")).write_bytes(binary)
+    for name in ["helm", "kubectl"]:
+        (TOOLS / host.executable(name)).chmod(0o755)
     argo = LOCK["argocd"]
     checked_download(
         TOOLS / "argocd-install.yaml",
@@ -128,7 +145,7 @@ def install_tools():
 
 def k(*args, **kwargs):
     return run(
-        TOOLS / "kubectl.exe",
+        TOOLS / host.executable("kubectl"),
         "--kubeconfig",
         KUBECONFIG,
         "--context",
@@ -197,7 +214,7 @@ def ensure_cluster():
     if info:
         run("docker", "start", NODE)
         run(
-            TOOLS / "kind.exe",
+            TOOLS / host.executable("kind"),
             "export",
             "kubeconfig",
             "--name",
@@ -212,7 +229,7 @@ def ensure_cluster():
                 "plan an explicit rebuild; refusing to replace persistent staging silently."
             )
         run(
-            TOOLS / "kind.exe",
+            TOOLS / host.executable("kind"),
             "create",
             "cluster",
             "--name",
@@ -429,7 +446,7 @@ def load_image(source_sha):
         timeout=900,
         quiet=True,
     )
-    run(TOOLS / "kind.exe", "load", "docker-image", "--name", OWNER, tag, timeout=300)
+    run(TOOLS / host.executable("kind"), "load", "docker-image", "--name", OWNER, tag, timeout=300)
     # Read the actual imported containerd manifest digest; Docker config IDs are not manifests.
     listing = run("docker", "exec", NODE, "ctr", "-n", "k8s.io", "images", "ls", quiet=True)
     row = next(line.split() for line in listing.splitlines() if line.startswith(tag + " "))
@@ -649,7 +666,7 @@ def up():
     k("apply", "-f", ROOT / "gitops/platform/staging.yaml")
     wait_staging(local_git("rev-parse", "HEAD"))
     print(
-        "Staging is Synced/Healthy. Run platform.ps1 forward for http://127.0.0.1:18000/docs",
+        "Staging is Synced/Healthy. Run python scripts/platform_local.py forward for http://127.0.0.1:18000/docs",
         flush=True,
     )
 
@@ -682,7 +699,7 @@ def start():
 @contextlib.contextmanager
 def forward(resource="service/demo-api", port=18000, namespace="staging", target_port=8000):
     args = [
-        str(TOOLS / "kubectl.exe"),
+        str(TOOLS / host.executable("kubectl")),
         "--kubeconfig",
         str(KUBECONFIG),
         "--context",
@@ -696,9 +713,7 @@ def forward(resource="service/demo-api", port=18000, namespace="staging", target
         f"{port}:{target_port}",
     ]
     log = (RUNTIME / f"port-forward-{port}.log").open("w")
-    process = subprocess.Popen(
-        args, stdout=log, stderr=log, creationflags=subprocess.CREATE_NO_WINDOW
-    )
+    process = subprocess.Popen(args, stdout=log, stderr=log, **host.background_options())
     try:
 
         def alive():
@@ -751,27 +766,9 @@ def main():
         "action", choices=["up", "start", "verify", "status", "forward", "stop", "publish-local"]
     )
     args = parser.parse_args()
-    if sys.platform != "win32" or sys.version_info[:2] != (3, 12):
-        raise RuntimeError("Use Windows Python 3.12 and Docker Desktop Linux containers.")
-    if not __debug__:
-        raise RuntimeError("Verification requires Python assertions; remove -O/PYTHONOPTIMIZE.")
-    if (
-        not os.environ.get("LOCALAPPDATA")
-        or "onedrive" in str(RUNTIME.resolve()).lower()
-        or ROOT in RUNTIME.resolve().parents
-    ):
-        raise RuntimeError("Runtime must be outside Git and cloud-synced directories.")
-    RUNTIME.mkdir(parents=True, exist_ok=True)
-    # Windows releases this process lock even after a crash; don't race deployments/fault tests.
-    import msvcrt
-
-    with (RUNTIME / "operation.lock").open("a+b") as lock:
-        lock.seek(0)
-        if args.action not in {"status", "forward"}:
-            try:
-                msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
-            except OSError as exc:
-                raise RuntimeError("Another Milestone 2 command is running.") from exc
+    host.require_supported()
+    host.private_directory(RUNTIME, ROOT)
+    with host.lock(RUNTIME / "operation.lock", enabled=args.action not in {"status", "forward"}):
         if args.action == "up":
             up()
         elif args.action == "start":

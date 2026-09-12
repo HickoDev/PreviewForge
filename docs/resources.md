@@ -1,5 +1,7 @@
 # Local resources and asynchronous exports
 
+See [Windows/Linux prerequisites and runtime locations](installation.md) for `<installation-root>`. Commands use `python`; substitute `python3` on Linux if needed.
+
 Milestone 5 gives staging and each PR preview their own Floci S3 bucket and SQS queue. Terraform creates them; the local watcher reads the existing Git desired records and reconciles the resources. Helm deploys a worker alongside each API and database.
 
 An export follows this path:
@@ -30,22 +32,22 @@ The committed pending row is an outbox: if sending to SQS fails, the worker retr
 
 ## Start the configured laptop
 
-Requires the existing GitHub-mode setup, Windows Python 3.12, running Docker Desktop, Git, and `gh` with **HickoDev active**. Registry pulls use the privately configured read-only credential. Do not paste credentials into chat or files in this checkout. Isolated application CI tests require Docker Compose 2.24.4+ (`!reset` support); Compose 5 works.
+Requires the existing GitHub-mode setup, Python 3.12 on a supported host, a running local Docker daemon, Git, and `gh` with **HickoDev active**. Registry pulls use the privately configured read-only credential. Do not paste credentials into chat or files in this checkout. Isolated application CI tests require Docker Compose 2.24.4+ (`!reset` support); Compose 5 works.
 
 Stop an existing watcher with Ctrl+C before setup, then run these from the PreviewForge folder:
 
-```powershell
+```text
 python scripts/resources.py up --github
 python scripts/previews.py watch --github --apply
 ```
 
-Keep the watcher running. `up` installs checksum-pinned Terraform and hashed Python dependencies into `%LOCALAPPDATA%\PreviewForge\tools\milestone5`, resumes the retained cluster and shared persistent Floci container, discovers Floci's Docker network address, and refreshes the private Kubernetes route. It provisions resources before waiting for export readiness and enabling the tracked `gitops/export-values.yaml` overlay on the configured Argo applications. Earlier local fixture workflows keep exports disabled. The watcher automatically uses this integration once enabled. Use this startup command after Milestone 5: the older `platform.ps1 start` waits for API readiness before it can repair missing export dependencies.
+Keep the watcher running. `up` installs checksum-pinned Terraform and hashed Python dependencies into `<installation-root>/tools/milestone5`, resumes the retained cluster and shared persistent Floci container, discovers Floci's Docker network address, and refreshes the private Kubernetes route. It provisions resources before waiting for export readiness and enabling the tracked `gitops/export-values.yaml` overlay on the configured Argo applications. Earlier local fixture workflows keep exports disabled. The watcher automatically uses this integration once enabled. Use this startup command after Milestone 5: the older `python scripts/platform_local.py start` waits for API readiness before it can repair missing export dependencies.
 
 In another terminal:
 
-```powershell
+```text
 python scripts/resources.py status --github
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 forward
+python scripts/platform_local.py forward
 ```
 
 `status` can run alongside the watcher. To inspect Terraform's plan, stop the watcher, run `python scripts/resources.py plan --github --environment staging`, then restart it. Planning shares the operation lock with setup/reconciliation.
@@ -65,9 +67,20 @@ Invoke-WebRequest "http://127.0.0.1:18000/exports/$($reportJob.id)/download" -Us
 $reportFile
 ```
 
+On Linux/Bash, use the same endpoints with curl. Copy the ID from the submission response into `exportId`, repeat the status request until `completed`, then download:
+
+```bash
+curl --fail-with-body -sS -X POST http://127.0.0.1:18000/exports -H 'Content-Type: application/json' -d '{}'
+exportId='REPLACE_WITH_RETURNED_EXPORT_ID'
+curl --fail-with-body -sS "http://127.0.0.1:18000/exports/$exportId"
+curl --fail-with-body -sS "http://127.0.0.1:18000/exports/$exportId/download" -o "${TMPDIR:-/tmp}/previewforge-report-$exportId.json"
+```
+
+The browser's `/docs` page can submit, inspect and download reports on either OS. A download before completion returns 409; investigate the worker/resources if a job stays pending.
+
 For two active PRs, use separate terminals and ports (replace the PR numbers):
 
-```powershell
+```text
 python scripts/previews.py forward --github --pr 123 --port 18051
 python scripts/previews.py forward --github --pr 124 --port 18052
 ```
@@ -79,7 +92,7 @@ Their documentation URLs are `http://127.0.0.1:18051/docs` and `http://127.0.0.1
 Terraform state, locks, logs and installation identity live outside Git, OneDrive and Floci's volume:
 
 ```text
-%LOCALAPPDATA%\PreviewForge\runtime\previewforge-m5\
+<installation-root>/runtime/previewforge-m5/
   installation.json
   environments\staging\terraform.tfstate
   environments\preview-123\terraform.tfstate
@@ -100,7 +113,7 @@ All AWS clients use dummy `test` credentials and explicit local endpoints. Host 
 
 ## Verification
 
-```powershell
+```text
 python scripts/ci.py test
 python -m unittest discover -s tests/platform -v
 python scripts/resources.py verify --github --allow-faults --allow-github-writes
@@ -109,7 +122,7 @@ python scripts/verify_resources_startup.py --allow-faults
 
 The PR verification command creates two temporary real PRs, triggers private image publication, updates one PR, introduces bounded faults, and closes/deletes only its own acceptance artifacts. Stop the normal watcher first; verification uses the same operation lock. Existing staging tasks are preserved. Results and recovery journals stay in the private M5 runtime. If the PR exercise is interrupted:
 
-```powershell
+```text
 python scripts/resources.py recover --github --allow-github-writes
 ```
 

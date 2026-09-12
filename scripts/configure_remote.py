@@ -11,10 +11,14 @@ import platform_local as p
 import previews as v
 
 
-def registry():
+def registry(*, interactive=False):
     # Verify the normal active account before accepting any additional credential.
     p.gh("auth", "status", "--active", "--hostname", "github.com")
-    token = sys.stdin.read().strip()
+    token = (
+        p.host.hidden_prompt("GHCR read-only token (hidden): ")
+        if interactive
+        else sys.stdin.read().strip()
+    )
     if not re.fullmatch(r"ghp_[A-Za-z0-9]{30,}", token):
         raise ValueError("Use a personal access token (classic), entered only at the hidden prompt")
     environment = {**os.environ, "GH_TOKEN": token}
@@ -73,9 +77,11 @@ def registry():
 
 if __name__ == "__main__":
     try:
-        if sys.argv[1:] != ["registry"]:
-            raise ValueError("Run scripts/configure-registry.ps1 for the hidden credential prompt")
-        registry()
+        if sys.argv[1:] not in (["registry"], ["registry", "--stdin"]):
+            raise ValueError(
+                "Run python scripts/configure_remote.py registry for the hidden prompt"
+            )
+        registry(interactive=sys.argv[1:] == ["registry"])
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         sys.exit(1)

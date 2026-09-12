@@ -80,7 +80,7 @@
         <mxCell id="overview-host" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#CBD5E1;strokeWidth=1.5;dashed=1;dashPattern=7 5;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="1">
           <mxGeometry x="48" y="460" width="1704" height="905" as="geometry" />
         </mxCell>
-        <mxCell id="overview-host-heading" value="LOCAL MACHINE  /  Docker Desktop + Windows tools" style="text;html=1;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontSize=14;fontColor=#475569;fontStyle=1;align=left;verticalAlign=middle;spacing=0;" vertex="1" parent="overview-host">
+        <mxCell id="overview-host-heading" value="LOCAL MACHINE  /  Windows or Linux + Docker" style="text;html=1;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontSize=14;fontColor=#475569;fontStyle=1;align=left;verticalAlign=middle;spacing=0;" vertex="1" parent="overview-host">
           <mxGeometry x="60" y="16" width="1622.0" height="26" as="geometry" />
         </mxCell>
         <mxCell id="overview-kind" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#93C5FD;strokeWidth=1.5;dashed=1;dashPattern=7 5;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="overview-host">
@@ -107,7 +107,7 @@
         <mxCell id="overview-floci-body" value="S3 buckets + SQS queues&lt;br&gt;One pair per environment&lt;br&gt;Dummy AWS credentials&lt;br&gt;Explicit local endpoints" style="text;html=1;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontSize=16;fontColor=#475569;fontStyle=0;align=left;verticalAlign=middle;spacing=0;" vertex="1" parent="overview-floci">
           <mxGeometry x="18" y="53" width="244" height="107" as="geometry" />
         </mxCell>
-        <mxCell id="overview-state-note" value="Terraform state and private runtime files stay on the laptop, outside Git and OneDrive." style="text;html=1;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontSize=16;fontColor=#475569;fontStyle=0;align=left;verticalAlign=middle;spacing=0;" vertex="1" parent="overview-host">
+        <mxCell id="overview-state-note" value="Terraform state and private runtime stay on this machine, outside Git and synced folders." style="text;html=1;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontSize=16;fontColor=#475569;fontStyle=0;align=left;verticalAlign=middle;spacing=0;" vertex="1" parent="overview-host">
           <mxGeometry x="42" y="615" width="260" height="100" as="geometry" />
         </mxCell>
         <mxCell id="overview-kube-api" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2563EB;strokeWidth=1.5;dashed=0;dashPattern=7 5;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="overview-kind">
@@ -664,7 +664,7 @@
         <mxCell id="delivery-footer-rule" value="" style="rounded=0;arcSize=8;whiteSpace=wrap;html=1;fillColor=#E2E8F0;strokeColor=none;strokeWidth=1.5;dashed=0;dashPattern=7 5;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="1">
           <mxGeometry x="48" y="1225" width="1824" height="1" as="geometry" />
         </mxCell>
-        <mxCell id="delivery-footer-note" value="The laptop watcher must be running for local lifecycle work. Staging is excluded from automatic preview cleanup." style="text;html=1;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontSize=15;fontColor=#475569;fontStyle=0;align=left;verticalAlign=middle;spacing=0;" vertex="1" parent="1">
+        <mxCell id="delivery-footer-note" value="The watcher must be running for local lifecycle work. Staging is excluded from automatic preview cleanup." style="text;html=1;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontSize=15;fontColor=#475569;fontStyle=0;align=left;verticalAlign=middle;spacing=0;" vertex="1" parent="1">
           <mxGeometry x="48" y="1243" width="1660" height="32" as="geometry" />
         </mxCell>
         <mxCell id="delivery-footer-brand" value="PreviewForge" style="text;html=1;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontSize=15;fontColor=#0F172A;fontStyle=1;align=right;verticalAlign=middle;spacing=0;" vertex="1" parent="1">

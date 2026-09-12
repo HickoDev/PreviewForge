@@ -2,7 +2,6 @@
 
 import argparse
 import json
-import os
 import re
 import secrets
 import sys
@@ -441,21 +440,11 @@ def main():
         not REMOTE or args.action in {"reconcile", "watch", "forward", "status"},
         "This command is local-only",
     )
-    state.require(
-        sys.platform == "win32" and sys.version_info[:2] == (3, 12), "Use Windows Python 3.12"
-    )
-    state.require(__debug__, "Remove Python -O/PYTHONOPTIMIZE")
-    state.require(
-        os.environ.get("LOCALAPPDATA") and "onedrive" not in str(p.RUNTIME).lower(),
-        "Unsafe runtime",
-    )
-    p.RUNTIME.mkdir(parents=True, exist_ok=True)
-    import msvcrt
-
-    with (p.RUNTIME / "operation.lock").open("a+b") as lock:
-        lock.seek(0)
-        if args.action not in {"forward", "status"}:
-            msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+    p.host.require_supported()
+    p.host.private_directory(p.RUNTIME, p.ROOT)
+    with p.host.lock(
+        p.RUNTIME / "operation.lock", enabled=args.action not in {"forward", "status"}
+    ):
         if args.action == "up":
             up()
         elif args.action == "verify":

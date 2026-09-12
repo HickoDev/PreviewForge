@@ -2,27 +2,27 @@
 
 The `HickoDev/PreviewForge` repository drives the local kind cluster. A trusted application PR runs CI on GitHub, publishes to a private GHCR package, and writes its immutable digest to Git. Argo CD reads that record over SSH and deploys it locally. Nothing connects inbound from GitHub to the laptop. The current delivery implementation supports private or public source with a private package; real acceptance used a private repository. See [publication status](public-release.md) before changing visibility.
 
-This runbook resumes the existing owner-operated installation. It assumes Windows Python 3.12, Git, Docker Desktop, `gh` with **HickoDev active**, the retained kind node/runtime files, and configured Git/registry credentials. The [activation reference](previews.md#remote-activation-reference) describes the original credential/manifests setup; a complete fresh-laptop bootstrap or lost-node restore has not been verified. For a standalone first run, use [Compose setup](setup.md).
+This runbook resumes the existing owner-operated installation. It assumes Python 3.12 on a supported host, Git, a local Docker daemon running Linux containers, `gh` with **HickoDev active**, the retained kind node/runtime files, and configured Git/registry credentials. The [activation reference](previews.md#remote-activation-reference) describes the original credential/manifests setup; a complete fresh-laptop bootstrap or lost-node restore has not been verified. For a standalone first run, use [Compose setup](setup.md).
 
 ## Start and inspect
 
-Start Docker Desktop with Linux containers. Stop an existing watcher with Ctrl+C before running setup commands. From the PreviewForge checkout, resume the existing cluster, Floci and Terraform resources, then run the local reconciler:
+Start your local Docker daemon with Linux containers. Stop an existing watcher with Ctrl+C before running setup commands. From the PreviewForge checkout, resume the existing cluster, Floci and Terraform resources, then run the local reconciler:
 
-```powershell
+```text
 python scripts/resources.py up --github
 python scripts/previews.py watch --github --apply
 ```
 
 Keep the watcher running. If monitoring needs setup, run `python scripts/monitoring.py up` between `resources.py up --github` and starting the watcher; it uses the same operation lock. An already installed monitoring stack resumes with the node. In a second terminal:
 
-```powershell
+```text
 python scripts/previews.py status --github
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 forward
+python scripts/platform_local.py forward
 ```
 
 Open `http://127.0.0.1:18000/docs` or `http://127.0.0.1:18000/version` for staging. Ctrl+C stops a foreground command. To open an active PR preview, replace `123` with its real PR number:
 
-```powershell
+```text
 python scripts/previews.py forward --github --pr 123 --port 18042
 ```
 
@@ -34,7 +34,7 @@ Open `http://127.0.0.1:18042/docs`. The command refuses PRs without a desired re
 
 Stop the watcher before another local command that changes cluster resources. A dry run and an applied reconciliation are:
 
-```powershell
+```text
 python scripts/previews.py reconcile --github
 python scripts/previews.py reconcile --github --apply
 ```
@@ -43,8 +43,8 @@ Then restart `watch --github --apply`. It recovers an Argo sync that exhausted r
 
 To stop the cluster while retaining staging data, first stop forwards and the watcher, then run:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 stop
+```text
+python scripts/platform_local.py stop
 ```
 
 Resume with `resources.py up --github` and the watcher command above. This procedure uses the existing node and locally configured credentials; rebuilding a lost node or configuring a fresh laptop is a separate operation.
@@ -52,7 +52,7 @@ Resume with `resources.py up --github` and the watcher command above. This proce
 ## Credentials and delivery rules
 
 - Every laptop GitHub operation in the scripts verifies that the active `gh` account is **HickoDev**. A separate read-only SSH deploy key allows Argo to read only this repository.
-- The laptop's private GHCR pull credential is a HickoDev classic PAT with only `read:packages`. It is stored in the owned Kubernetes Secret and never sent to Actions. To rotate it, run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-registry.ps1`, enter it at the hidden prompt, then restart/reconcile the watcher.
+- The laptop's private GHCR pull credential is a HickoDev classic PAT with only `read:packages`. It is stored in the owned Kubernetes Secret and never sent to Actions. To rotate it, run `python scripts/configure_remote.py registry`, enter it at the hidden prompt, then restart/reconcile the watcher.
 - Actions uses its short-lived repository token. `PREVIEWFORGE_REMOTE_ENABLED=true` enables publication and record cleanup. `PREVIEWFORGE_PACKAGE_ID` pins the package verified through the owner's read credential: GitHub's Actions response can omit the linked repository field. Package name, owner and private visibility are checked; an available repository association must match PreviewForge. No personal token is stored in a repository variable.
 - Only successful builds for the current open PR head, authored by HickoDev in this repository, receive previews. Failed updates retain their last working image. Old or closed-PR build completions cannot deploy.
 - PR close/merge removes its record. Scheduled reconciliation and manual workflow dispatch recover missed close events and expire records after 48 hours. Argo removes workloads/storage, then the laptop watcher removes the owned namespace and its Terraform-managed Floci bucket/queue. Local cleanup resumes when the laptop reconnects.

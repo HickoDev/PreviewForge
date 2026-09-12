@@ -4,24 +4,24 @@ This guide covers the initial local Git fixture: a real task API and PostgreSQL 
 
 For the already configured GitHub/GHCR installation, use [the current resume procedure](remote.md). The `up` and `verify` commands below are local-mode commands and refuse to replace remote staging. Initial local setup is distinct from configuring GitHub credentials and delivery on a fresh laptop.
 
-## Start on Windows
+## Start on Windows or Linux
 
-Prerequisites: Windows x64, Python 3.12, Git, Docker Desktop with Linux containers/WSL2, internet for first downloads, and GitHub CLI authenticated with **HickoDev** for pinned upstream downloads. The bootstrap verifies that account before each GitHub operation. It never switches accounts. Allow approximately 4 GiB of spare Docker memory plus disk space for the node and application images.
+Follow the [Windows/Linux prerequisites](installation.md): Python 3.12, Git, a local Docker daemon running Linux containers, internet for first downloads, and GitHub CLI authenticated with **HickoDev** for pinned upstream downloads. The bootstrap verifies that account before each GitHub operation. It never switches accounts. Allow approximately 4 GiB of spare Docker memory for this initial fixture plus disk space for the node and application images; the complete stack needs additional capacity.
 
 From the platform repository root:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 up
+```text
+python scripts/platform_local.py up
 ```
 
-The command installs checksum-verified kind, Helm and kubectl into `%LOCALAPPDATA%\PreviewForge\tools\milestone2\`. It does not change your PATH. It creates `previewforge-m2`, installs pinned Argo CD, builds/loads the initial application image and waits for staging to become `Synced` and `Healthy`. Initial downloads can take several minutes; cached startup is faster.
+The command installs checksum-verified native kind, Helm and kubectl into `<installation-root>/tools/milestone2`. It does not change your PATH. It creates `previewforge-m2`, installs pinned Argo CD, builds/loads the initial application image and waits for staging to become `Synced` and `Healthy`. Initial downloads can take several minutes; cached startup is faster.
 
-All private runtime files live under `%LOCALAPPDATA%\PreviewForge\runtime\previewforge-m2\`: a dedicated kubeconfig, database password, local Git fixture and verification output. Every Kubernetes command explicitly selects this kubeconfig and context. Your normal kubeconfig is not modified. Do not delete the runtime password while keeping the database.
+All private runtime files live under `<installation-root>/runtime/previewforge-m2`: a dedicated kubeconfig, database password, local Git fixture and verification output. See [runtime locations](installation.md#runtime-and-credentials). Every Kubernetes command explicitly selects this kubeconfig and context. Your normal kubeconfig is not modified. Do not delete the runtime password while keeping the database.
 
 Open a terminal for forwarding:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 forward
+```text
+python scripts/platform_local.py forward
 ```
 
 Then visit [staging Swagger](http://127.0.0.1:18000/docs), [readiness](http://127.0.0.1:18000/health/ready), [version](http://127.0.0.1:18000/version) and [metrics](http://127.0.0.1:18000/metrics). Ctrl+C closes the forward; staging continues running. Port 18000 binds only to loopback. All application/database Services are ClusterIP; there is no Ingress or public load balancer.
@@ -30,8 +30,8 @@ Milestone 1 Compose can remain running on loopback ports 8000/4566. Its PostgreS
 
 ## Verify the working system
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 verify
+```text
+python scripts/platform_local.py verify
 ```
 
 This includes `up`, refreshes the managed application/chart inputs and staging defaults from the current checkout into the local Git fixture, builds that baseline, and then tests the actual cluster. Previous committed fixture revisions remain in local Git history. Uncommitted or ignored files in the fixture cause verification to stop before changing it; keep private files outside that directory.
@@ -52,8 +52,10 @@ An application's `Healthy` status can describe the still-working API while a syn
 
 ## See what Kubernetes and Argo CD are doing
 
+Use `python scripts/platform_local.py status` on either OS. For direct inspection, the following PowerShell examples use Windows defaults:
+
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 status
+python scripts/platform_local.py status
 
 $pfRuntime = Join-Path $env:LOCALAPPDATA 'PreviewForge\runtime\previewforge-m2'
 $pfKubectl = Join-Path $env:LOCALAPPDATA 'PreviewForge\tools\milestone2\kubectl.exe'
@@ -62,6 +64,18 @@ $pfKubectl = Join-Path $env:LOCALAPPDATA 'PreviewForge\tools\milestone2\kubectl.
 & $pfKubectl --kubeconfig "$pfRuntime\kubeconfig" --context kind-previewforge-m2 -n staging logs deployment/demo-api --tail=30
 & $pfKubectl --kubeconfig "$pfRuntime\kubeconfig" --context kind-previewforge-m2 -n staging logs job/demo-migrate
 & $pfKubectl --kubeconfig "$pfRuntime\kubeconfig" --context kind-previewforge-m2 -n argocd get application staging
+```
+
+Linux/Bash equivalent using the private Linux defaults:
+
+```bash
+pfHome="${PREVIEWFORGE_HOME:-${XDG_STATE_HOME:-$HOME/.local/state}/previewforge}"
+pfRuntime="$pfHome/runtime/previewforge-m2"
+pfKubectl="$pfHome/tools/milestone2/kubectl"
+"$pfKubectl" --kubeconfig "$pfRuntime/kubeconfig" --context kind-previewforge-m2 -n staging get pods,svc,pvc,jobs
+"$pfKubectl" --kubeconfig "$pfRuntime/kubeconfig" --context kind-previewforge-m2 -n staging get events --sort-by=.lastTimestamp
+"$pfKubectl" --kubeconfig "$pfRuntime/kubeconfig" --context kind-previewforge-m2 -n staging logs deployment/demo-api --tail=30
+"$pfKubectl" --kubeconfig "$pfRuntime/kubeconfig" --context kind-previewforge-m2 -n argocd get application staging
 ```
 
 `/health/live` asks whether the API process is alive. `/health/ready` additionally checks the database and schema. A database outage should remove the pod from traffic, not repeatedly restart a healthy API process. Kubernetes pod conditions, events, Argo status, request logs and `/metrics` provide this fixture's visibility. The configured GitHub installation also has [Prometheus/Grafana dashboards](observability.md).
@@ -81,8 +95,10 @@ $pfSource = Join-Path $env:LOCALAPPDATA 'PreviewForge\runtime\previewforge-m2\so
 # Example: edit replicas in $pfSource\gitops\staging\values.yaml first.
 git -C $pfSource add gitops/staging/values.yaml
 git -C $pfSource -c user.name='PreviewForge local fixture' -c user.email=fixture@previewforge.invalid commit -m 'Change local staging configuration'
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 publish-local
+python scripts/platform_local.py publish-local
 ```
+
+For Bash, set `pfSource="${PREVIEWFORGE_HOME:-${XDG_STATE_HOME:-$HOME/.local/state}/previewforge}/runtime/previewforge-m2/source"`, edit the same values file, then use `git -C "$pfSource"` for the add/commit commands. `python scripts/platform_local.py publish-local` is identical on both hosts.
 
 `publish-local` copies Git refs between two filesystem directories. It does not push to GitHub or rebuild the application. `verify` refreshes the managed fixture inputs from this checkout and creates a second source/image revision. Fixture commits include only the files belonging to that operation, and builds require a clean fixture at the declared source SHA. The configured GitHub installation uses [SSH Git reads and private GHCR pulls](remote.md) instead of this fixture transport.
 
@@ -97,10 +113,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 publi
 
 To stop only this milestone while retaining its node, volumes and Git fixture:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 stop
+```text
+python scripts/platform_local.py stop
 # Later:
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 up
+python scripts/platform_local.py up
 ```
 
 There is intentionally no destructive cluster-delete shortcut. If a retained fixture exists but its node is missing, startup refuses to create a replacement silently. A `Retain` policy does not protect data from deleting the kind node/container: the volume's bytes still live inside that node. Use PostgreSQL backups before intentionally rebuilding/removing the cluster. This milestone verifies pod replacement and stop/start persistence, not disaster recovery or high availability.

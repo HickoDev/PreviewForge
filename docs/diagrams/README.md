@@ -10,9 +10,25 @@ Open **[previewforge-architecture.drawio](previewforge-architecture.drawio)** in
 
 [Download all three pages as PDF](previewforge-architecture.pdf). Use the overview PNG for an image upload, the PDF for a document post, and SVG for scaling without loss of sharpness. PNG exports are 2,882 pixels wide. SVG and PDF exports also embed the editable diagram.
 
+## PNG previews
+
+These are the latest draw.io exports, in the same order as the three-page PDF.
+
+### 01 — Platform overview
+
+![Platform overview](previewforge-architecture-overview.png)
+
+### 02 — PR delivery and cleanup
+
+![PR delivery and cleanup](previewforge-architecture-delivery.png)
+
+### 03 — Runtime, exports and diagnostics
+
+![Runtime, exports and diagnostics](previewforge-architecture-runtime.png)
+
 ## Editing and export
 
-1. Open the `.drawio` file with draw.io Desktop (installed here at `C:\Program Files\draw.io\draw.io.exe`), or use **File → Open From → Device** in diagrams.net.
+1. Open the `.drawio` file with draw.io Desktop on your OS, or use **File → Open From → Device** in diagrams.net.
 2. Select a page using the bottom tabs. Double-click text to edit it; move a component or its containing group to keep related objects together.
 3. Save the `.drawio` source, then export the updated pages. Check the images at normal size for clipped labels and connector crossings.
 
@@ -26,7 +42,7 @@ Brand artwork comes from the pinned [Simple Icons source](icons/sources.json): D
 
 ### Regenerate the exports
 
-These commands were verified with draw.io Desktop **30.0.0**. Run from the repository root. They regenerate the existing exports from the editable source:
+These PowerShell commands were verified on Windows with draw.io Desktop **30.0.0**. On other hosts, use the desktop export menu; a Linux CLI export has not been verified. Run from the repository root. They regenerate the existing exports from the editable source:
 
 ```powershell
 $drawio = 'C:\Program Files\draw.io\draw.io.exe'
@@ -53,4 +69,4 @@ Start-Process -FilePath $drawio -WindowStyle Hidden -Wait -ArgumentList @(
 )
 ```
 
-The diagrams describe the configured GitHub mode, not the original local Git fixture. PR numbers and preview ports are examples. Native file structure, text fit, PNG/SVG exports and the three-page PDF were checked against the application and platform documentation. Earlier generated PNG illustrations and their prompts remain as archived drafts; the `.drawio` file is the maintained diagram source.
+The diagrams describe the configured GitHub mode, not the original local Git fixture. PR numbers and preview ports are examples. Native file structure, text fit, PNG/SVG exports and the three-page PDF were checked against the application and platform documentation. The `.drawio` file is the maintained diagram source; the architecture previews use only its three current PNG exports.

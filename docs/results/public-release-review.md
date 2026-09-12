@@ -12,7 +12,7 @@ Fixed a public-release incompatibility in `scripts/github_delivery.py`: publicat
 
 The privileged delivery job also excludes fork workflow runs before starting. Existing Python validation still checks workflow identity, artifact provenance, the current PR head, same-repository ownership, author, completion and package identity. Privileged delivery and close reconciliation check out trusted `main`; ordinary PR tests have read-only permissions and no registry/NVIDIA credentials.
 
-The README now explains all six milestones, the API-only demo, owner-bound automation and remaining AI quality acceptance. Documentation explains the distinction between source visibility, private GHCR and downloadable CI image archives. The updated [architecture diagram](../diagrams/previewforge-architecture-v2.png) removes the private-source wording and preserves the original. It used the built-in image generation tool; the [exact edit prompt](../diagrams/previewforge-architecture-v2.prompt.md) is saved alongside it.
+The README now explains all six milestones, the API-only demo, owner-bound automation and remaining AI quality acceptance. Documentation explains the distinction between source visibility, private GHCR and downloadable CI image archives. The AI-generated raster diagram used during this review was subsequently replaced by the [native three-page draw.io diagram](../diagrams/previewforge-architecture.drawio) and its [PNG previews](../diagrams/README.md#png-previews). The earlier raster drafts and prompts have been removed from the repository.
 
 ## Results
 

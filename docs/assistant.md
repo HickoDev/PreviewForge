@@ -1,14 +1,16 @@
 # Milestone 6: deployment diagnostics
 
+See [Windows/Linux prerequisites and runtime locations](installation.md) for `<installation-root>`. Commands use `python`; substitute `python3` on Linux if needed.
+
 The assistant explains a selected synthetic PreviewForge API deployment using its immutable image identity, Argo status, safe configuration fields, pod state, recent events and application logs. Every factual observation cites an evidence ID and an exact excerpt. Hypotheses remain suggestions for a person to check. It has no deployment, rollback, Terraform, shell, exec or GitHub-writing capability.
 
 **Implemented and mock-tested. Hosted calls require a privately configured key and explicit live opt-in; see the [live verification record](results/milestone-6-live.md) for tested behavior and remaining acceptance.** Mock mode uses the deterministic baseline; it does not run or simulate a real language model.
 
 ## Start and use mock mode
 
-Prerequisites are the configured Windows Python 3.12 / Docker Desktop / kind setup from [Milestone 5](resources.md). Run from the PreviewForge folder, with Docker Desktop running. Stop an existing preview watcher before `resources.py up --github`; restart it in a separate terminal after setup for ordinary PR lifecycle operations:
+Prerequisites are the configured Python 3.12 / Docker / kind setup on a supported host from [Milestone 5](resources.md). Run from the PreviewForge folder, with your local Docker daemon running. Stop an existing preview watcher before `resources.py up --github`; restart it in a separate terminal after setup for ordinary PR lifecycle operations:
 
-```powershell
+```text
 python scripts/resources.py up --github
 python scripts/assistant.py up
 python scripts/assistant.py diagnose --fixture wrong-port
@@ -19,7 +21,7 @@ python scripts/assistant.py diagnose --environment staging
 
 For the API documentation:
 
-```powershell
+```text
 python scripts/assistant.py forward
 ```
 
@@ -27,7 +29,7 @@ Open **http://127.0.0.1:18080/docs**. The `POST /diagnoses` example runs the syn
 
 To diagnose a running PR, replace `123` with its number:
 
-```powershell
+```text
 python scripts/assistant.py diagnose --environment preview-123
 ```
 
@@ -47,15 +49,15 @@ Before live use, open the [NVIDIA API Catalog](https://build.nvidia.com/nvidia/n
 
 Run this command yourself in an interactive terminal:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-nvidia.ps1
+```text
+python scripts/assistant.py configure-key
 ```
 
 Enter the key at the hidden prompt. **Never paste it into chat or a command argument.** The script sends it through stdin into the owned `previewforge-nvidia` Secret in `previewforge-ai`. It does not save the key in Git, OneDrive, an environment file, logs or shell history, and makes no inference call. Kubernetes Secret values are base64-encoded, not inherently encrypted. No preview receives this Secret.
 
 Then explicitly enable hosted mode and run one synthetic smoke case:
 
-```powershell
+```text
 python scripts/assistant.py up --allow-live
 python scripts/assistant.py live-smoke --allow-live
 ```
@@ -66,7 +68,7 @@ Smoke/evaluation commands save the sanitized report and return a nonzero exit st
 
 If the smoke passes and your account has sufficient quota, run the bounded evaluation:
 
-```powershell
+```text
 python scripts/assistant.py live-evaluate --allow-live --trials 1
 ```
 
@@ -88,7 +90,7 @@ Filtering, field allowlists, synthetic-only inputs and canary tests reduce expos
 
 ## Tests and results
 
-```powershell
+```text
 python scripts/assistant.py test
 python -m unittest discover -s tests/platform -v
 python scripts/assistant.py evaluate
@@ -102,7 +104,7 @@ The evaluation contains seven development cases and six separately labeled varia
 
 For the real Kubernetes failure exercise, stop the normal preview watcher first, then run:
 
-```powershell
+```text
 python scripts/assistant.py verify --allow-faults
 ```
 
@@ -110,4 +112,4 @@ It uses a read-only local Git fixture and the already published demo image in di
 
 `python scripts/verify_assistant_startup.py --allow-faults` separately stops only the assistant, verifies a staging export completes without AI, and runs the ordinary startup command again. It restores the assistant in a `finally` block. Staging and monitoring remain running.
 
-Private reports, policies and recovery journals live under `%LOCALAPPDATA%\PreviewForge\runtime\previewforge-m6`, with Windows access restricted to your account and SYSTEM. Prompts/raw provider responses are not logged or saved. Reports include sanitized evidence, validation outcomes, source/config identities, provider/model, prompt version, evidence hash, request IDs, latency and returned usage. Only reviewed synthetic results are copied into [the milestone report](results/milestone-6.md).
+Private reports, policies and recovery journals live under `<installation-root>/runtime/previewforge-m6`, with Windows access restricted to your account/SYSTEM and Linux directory permissions set to `0700`. Prompts/raw provider responses are not logged or saved. Reports include sanitized evidence, validation outcomes, source/config identities, provider/model, prompt version, evidence hash, request IDs, latency and returned usage. Only reviewed synthetic results are copied into [the milestone report](results/milestone-6.md).

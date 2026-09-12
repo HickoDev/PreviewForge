@@ -1,0 +1,72 @@
+name: Host portability
+on:
+  pull_request:
+    paths: ['scripts/**', 'reconciler/**', 'tests/platform/**', 'bootstrap/**', 'previewforge-demo/**', 'charts/demo-app/**', 'gitops/platform/staging.yaml', 'gitops/platform/previews.yaml', 'gitops/staging/values.yaml', 'compose.yaml', '.github/workflows/portability-ci.yml']
+  push:
+    branches: [main]
+    paths: ['scripts/**', 'reconciler/**', 'tests/platform/**', 'bootstrap/**', 'previewforge-demo/**', 'charts/demo-app/**', 'gitops/platform/staging.yaml', 'gitops/platform/previews.yaml', 'gitops/staging/values.yaml', 'compose.yaml', '.github/workflows/portability-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  host-tests:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests/platform -v
+  linux-local-platform:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Cache checksum-pinned public tools without deployment credentials
+        shell: python
+        run: |
+          import hashlib, json, sys, urllib.request
+          from pathlib import Path
+          sys.path.insert(0, 'scripts')
+          import host
+          lock = json.loads(Path('bootstrap/tools.lock.json').read_text())
+          tools = host.home() / 'tools/milestone2'
+          tools.mkdir(parents=True)
+          downloads = []
+          for name in ('kind', 'helm', 'kubectl'):
+              spec = lock[name]['platforms']['linux-amd64']
+              if name == 'kind':
+                  url = 'https://kind.sigs.k8s.io/dl/' + lock[name]['version'] + '/' + spec['asset']
+                  filename = spec['asset']
+              else:
+                  url = spec['url']
+                  filename = 'helm.tar.gz' if name == 'helm' else 'kubectl'
+              downloads.append((filename, url, spec['sha256']))
+          argo = lock['argocd']
+          downloads.append(('argocd-install.yaml', 'https://raw.githubusercontent.com/argoproj/argo-cd/' + argo['commit'] + '/manifests/install.yaml', argo['sha256']))
+          for filename, url, digest in downloads:
+              with urllib.request.urlopen(url, timeout=120) as response:
+                  data = response.read()
+              if hashlib.sha256(data).hexdigest() != digest:
+                  raise RuntimeError('Checksum mismatch: ' + filename)
+              (tools / filename).write_bytes(data)
+      - name: Compose application, emulator, persistence and recovery
+        run: python scripts/dev.py verify
+      - name: Local GitOps staging and two-preview lifecycle
+        run: python scripts/previews.py verify
+      - name: Stop owned services while retaining runner-local evidence
+        if: always()
+        run: |
+          python scripts/platform_local.py stop
+          python scripts/dev.py down

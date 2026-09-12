@@ -76,7 +76,7 @@ def verify():
     started = time.monotonic()
     p.run(sys.executable, "-m", "unittest", "discover", "-s", p.ROOT / "tests/platform")
     p.run(
-        p.TOOLS / "helm.exe",
+        p.TOOLS / p.host.executable("helm"),
         "lint",
         p.ROOT / "charts/demo-app",
         "--strict",
@@ -84,7 +84,7 @@ def verify():
         "image.digest=" + record()["image"]["digest"],
     )
     rendered = p.run(
-        p.TOOLS / "helm.exe",
+        p.TOOLS / p.host.executable("helm"),
         "template",
         "demo",
         p.ROOT / "charts/demo-app",
@@ -106,7 +106,7 @@ def verify():
     )
     try:
         p.run(
-            p.TOOLS / "helm.exe",
+            p.TOOLS / p.host.executable("helm"),
             "template",
             "demo",
             p.ROOT / "charts/demo-app",

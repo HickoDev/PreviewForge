@@ -1,17 +1,19 @@
 # Testing PreviewForge
 
-Choose a check based on what you want to prove. An application test suite, a running local preview and a real GitHub delivery exercise test different parts of the system. Run commands from the repository root with Python 3.12 and Docker Desktop in Linux-container mode.
+Choose a check based on what you want to prove. An application test suite, a running local preview and a real GitHub delivery exercise test different parts of the system. Run commands from the repository root with Python 3.12 and a local Docker daemon running Linux containers.
 
 ## Check a running application
 
 For the standalone API, follow [Compose setup](setup.md) and use `http://127.0.0.1:8000`. For staging or a real PR, first follow [GitHub-mode startup](remote.md), keep the watcher running and open the appropriate foreground forward:
 
-```powershell
+```text
 # Staging; keep this terminal open.
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 forward
+python scripts/platform_local.py forward
 ```
 
 In another terminal, create and update one synthetic task:
+
+The following example uses PowerShell. Linux/Bash users can use the [curl equivalents](setup.md#try-the-api), changing the base URL to staging or the selected preview. Swagger `/docs` offers the same operations on both hosts.
 
 ```powershell
 $apiBase = 'http://127.0.0.1:18000'
@@ -31,7 +33,7 @@ Expect HTTP 200 readiness, a version response identifying the selected environme
 
 Use two active, successfully delivered application PRs. Replace these example numbers and run each forward in its own terminal:
 
-```powershell
+```text
 python scripts/previews.py forward --github --pr 123 --port 18051
 python scripts/previews.py forward --github --pr 124 --port 18052
 ```
@@ -47,7 +49,7 @@ These checks exercise already deployed environments. To prove a **new real workf
 
 These commands do not create GitHub PRs, publish images, invoke NVIDIA or inject faults into staging. Initial Docker builds can download pinned dependencies. Application CI requires Compose **2.24.4+**; Compose 5 works.
 
-```powershell
+```text
 # Application lint/format, PostgreSQL integration and Floci export tests.
 python scripts/ci.py test
 
@@ -58,11 +60,11 @@ python -m unittest discover -s tests/platform -v
 python scripts/assistant.py test
 ```
 
-The application command creates a uniquely named temporary Compose project, its own test database and an in-memory Floci instance without publishing Floci's host port. It cleans up its containers/network afterward. The earlier `dev.ps1 test` tests the Compose baseline and skips the opt-in Floci export integration cases; use `ci.py test` for the full current application suite.
+The application command creates a uniquely named temporary Compose project, its own test database and an in-memory Floci instance without publishing Floci's host port. It cleans up its containers/network afterward. The earlier `python scripts/dev.py test` tests the Compose baseline and skips the opt-in Floci export integration cases; use `ci.py test` for the full current application suite.
 
 For the labeled mock evaluation, first run `assistant.py test` above to build its baseline test image, then use [assistant startup](assistant.md#start-and-use-mock-mode) and:
 
-```powershell
+```text
 python scripts/assistant.py evaluate
 ```
 
@@ -74,8 +76,8 @@ These are separate acceptance procedures with visible side effects. Stop the pre
 
 | Procedure | Command | Effects and recovery |
 | --- | --- | --- |
-| Compose acceptance | `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev.ps1 verify` | Replaces the Compose API, briefly stops its DB, creates/deletes owned smoke resources; [Compose recovery](setup.md#verify) |
-| Initial local GitOps | `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\platform.ps1 verify` | Local-fixture mode only; changes staging, tests DB/image faults and Git recovery; [details](kubernetes.md#verify-the-working-system) |
+| Compose acceptance | `python scripts/dev.py verify` | Replaces the Compose API, briefly stops its DB, creates/deletes owned smoke resources; [Compose recovery](setup.md#verify) |
+| Initial local GitOps | `python scripts/platform_local.py verify` | Local-fixture mode only; changes staging, tests DB/image faults and Git recovery; [details](kubernetes.md#verify-the-working-system) |
 | Synthetic previews | `python scripts/previews.py verify` | Local-fixture mode only; creates/removes two previews and updates staging; [details](previews.md#run-the-local-demonstration) |
 | Monitoring recovery | `python scripts/monitoring.py verify --allow-faults --allow-github-writes --trials 2` | Real GitHub config commits, temporary DB fault and disposable fixture; [recovery](observability.md#repeatable-exercises) |
 | Real PR exports/lifecycle | `python scripts/resources.py verify --github --allow-faults --allow-github-writes` | Creates real PRs, triggers image publication and introduces bounded faults; [recovery](resources.md#verification) |
