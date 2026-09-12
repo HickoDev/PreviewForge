@@ -403,7 +403,7 @@ def snapshot():
         target.unlink(missing_ok=True)
     for name in sorted(names):
         src = ROOT / name
-        if src.is_symlink() or not src.resolve().is_relative_to(ROOT):
+        if src.is_symlink() or not src.resolve().is_relative_to(ROOT.resolve()):
             raise RuntimeError("Snapshot inputs must be ordinary files inside the checkout.")
         target = SOURCE / name
         if not target.resolve().is_relative_to(SOURCE.resolve()):

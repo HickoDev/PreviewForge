@@ -194,6 +194,17 @@ class FixtureGitTests(unittest.TestCase):
         self.assertNotIn("notes.txt", platform.local_git("ls-tree", "--name-only", "HEAD"))
         self.assertIn("notes.txt", platform.local_git("diff", "--cached", "--name-only"))
 
+    def test_snapshot_accepts_equivalent_checkout_path(self):
+        self.write("previewforge-demo/app/main.py", "RELEASE = 1\n")
+        # The runner's Windows temp path can use an alias such as RUNNER~1.
+        # A lexical alias reproduces the unresolved-root mismatch on either OS.
+        alias = self.root / ".." / self.root.name
+        with patch.object(platform, "ROOT", alias):
+            platform.snapshot()
+        self.assertEqual(
+            (self.source / "previewforge-demo/app/main.py").read_text(), "RELEASE = 1\n"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
