@@ -73,8 +73,19 @@ Use `python3` on Linux if that selects Python 3.12. Follow the [installation gui
 
 ## Scope and cleanup
 
-The new `Host portability` workflow adds Windows/Linux host tests and a Linux Compose/two-preview acceptance job. Actionlint passed and its underlying commands passed locally; the workflow has not yet run on GitHub because these changes were not pushed during this task.
+The new `Host portability` workflow adds Windows/Linux host tests and a Linux Compose/two-preview acceptance job. Actionlint and the underlying commands passed locally. At the end of that local acceptance run the workflow had not yet been pushed; subsequent GitHub results are recorded below.
 
-Linux verification used a containerized root process and rootful daemon. A separate Linux desktop, unprivileged host user, macOS, ARM, rootless Docker, remote Docker daemon and Podman were not tested. macOS/ARM are rejected by the host adapter. Fresh credential issuance and full fresh-laptop remote onboarding were not repeated; the remote checks reused existing owner credentials. New GitHub PR delivery/publication, hosted NVIDIA inference and the full remote fault exercises were not rerun for this change.
+The initial Linux verification used a containerized root process and rootful daemon. The hosted follow-up below also exercises Compose and kind directly on an Ubuntu 24.04 runner. A separate Linux desktop, macOS, ARM, rootless Docker, remote Docker daemon and Podman were not tested. macOS/ARM are rejected by the host adapter. Fresh credential issuance and full fresh-laptop remote onboarding were not repeated; the remote checks reused existing owner credentials. New GitHub PR delivery/publication, hosted NVIDIA inference and the full remote fault exercises were not rerun for this change.
 
 The two labeled Linux test containers and four labeled test volumes were removed after their ownership labels were checked, including the copied credentials and disposable cluster/state. Sanitized evidence was saved first. The dedicated Windows Compose acceptance project was stopped with its separate data retained. Existing Windows project data and cluster were preserved. No GitHub writes, image publication, public exposure or real cloud provisioning occurred in this portability run.
+
+## GitHub follow-up: September 12, 2026
+
+Both workflows passed for commit `e0d1b317540eb7bd949ccc81e04ed47e187c4581`:
+
+- [Platform CI](https://github.com/HickoDev/PreviewForge/actions/runs/34694936799): host regressions, Python lint/format, Terraform/Floci lifecycle, workflow syntax and chart/monitoring checks.
+- [Host portability](https://github.com/HickoDev/PreviewForge/actions/runs/34694936763): 73 Windows tests passed with one POSIX-only skip; all 74 Ubuntu tests passed. The Ubuntu Compose acceptance, real kind/Argo staging, two-preview lifecycle and cleanup also passed.
+
+The first Windows runner exposed a fixture path comparison that used a resolved input path but an unresolved checkout root. The correction resolves both paths before checking containment. A new test reproduced the failure with an equivalent checkout path and passes after the fix; the hosted Windows rerun passes too. The source containment and symlink guards remain in place.
+
+These CI runs use synthetic local infrastructure and offline assistant checks. They do not add hosted NVIDIA evaluation or new GHCR publication coverage. The earlier local test counts and results above remain the record of that original run.

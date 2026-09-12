@@ -196,7 +196,6 @@
     "ownershipLabelsVerified": true,
     "copiedCredentialsRemovedWithDisposableInstallation": true
   },
-  "githubWorkflowRun": "not run; changes not pushed",
   "githubWrites": false,
   "hostedInferenceCalls": 0,
   "realCloudResources": false,
@@ -216,5 +215,52 @@
     "secretScan": "existing synthetic canary only",
     "powershellBlocksParsed": 6,
     "bashBlocksParsed": 3
+  },
+  "githubWorkflowAtLocalAcceptance": "not run; changes not pushed",
+  "githubVerification": {
+    "date": "2026-09-12",
+    "sourceCommit": "e0d1b317540eb7bd949ccc81e04ed47e187c4581",
+    "workflows": [
+      {
+        "name": "Platform CI",
+        "url": "https://github.com/HickoDev/PreviewForge/actions/runs/34694936799",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "name": "check",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "Host portability",
+        "url": "https://github.com/HickoDev/PreviewForge/actions/runs/34694936763",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "name": "linux-local-platform",
+            "conclusion": "success"
+          },
+          {
+            "name": "host-tests (ubuntu-24.04)",
+            "conclusion": "success"
+          },
+          {
+            "name": "host-tests (windows-latest)",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "windowsHostTests": {
+      "passed": 73,
+      "skipped": 1
+    },
+    "linuxHostTests": {
+      "passed": 74,
+      "skipped": 0
+    },
+    "linuxComposeAndPreviewAcceptance": "passed",
+    "snapshotPathAliasRegression": "failed before fix; passed after normalizing both paths"
   }
 }
